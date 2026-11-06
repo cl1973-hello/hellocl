@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hellocl · 数据台</title>
+<meta name="description" content="hellocl 的个人数据台：看数据，记数据，都存在你自己的浏览器里。">
+<meta name="theme-color" content="#E8E8E2">
+<meta property="og:type" content="website">
+<meta property="og:title" content="hellocl · 数据台">
+<meta property="og:description" content="一个只属于你的数据台：一条趋势线、一张记录表、一份存在本地的备份。">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23E8E8E2'/%3E%3Cpath d='M7 22V10M7 16h9M16 22V10' stroke='%2315181A' stroke-width='3' stroke-linecap='square'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#E8E8E2;
+    --surface:#F7F7F2;
+    --ink:#15181A;
+    --ink-soft:#4A4F48;
+    --mute:#6F746C;
+    --mute-2:#757A72;
+    --rule:#C6C9BC;
+    --rule-soft:#D2D4C6;
+    --rule-hair:#D8DACD;
+    --signal:#1F35A8;
+    --alert:#C2402A;
+
+    --sans:"Noto Sans SC",-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+
+    --pad:48px;
+    --gap:44px;
+    --rail:320px;
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.65;
+    font-weight:400;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+  ::selection{background:var(--signal);color:var(--surface)}
+  :focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+  a{color:inherit;text-decoration:none}
+
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  /* ---------- top bar ---------- */
+  .bar{border-bottom:1px solid var(--rule)}
+  .bar-in{
+    display:flex;align-items:center;gap:32px;
+    height:72px;padding:0 var(--pad);
+  }
+  .mark{
+    font-family:var(--mono);font-weight:600;font-size:18px;letter-spacing:.2px;
+    line-height:1;padding:2px 0;
+  }
+  .bar-sep{width:1px;height:18px;background:var(--rule);flex:none}
+  .nav{display:flex;align-items:center;gap:26px}
+  .nav a{
+    font-size:14px;color:var(--mute);line-height:1;
+    padding:4px 0;border-bottom:1px solid transparent;
+    transition:color .15s ease,border-color .15s ease;
+  }
+  .nav a:hover{color:var(--ink)}
+  .nav a[aria-current="page"]{color:var(--ink);font-weight:500;border-bottom-color:var(--ink)}
+  .bar-right{margin-left:auto;display:flex;align-items:center;gap:22px}
+  .stamp,.sync{font-family:var(--mono);font-size:12px;color:var(--mute);line-height:1}
+  .sync{display:inline-flex;align-items:center;gap:7px}
+  .sync i{width:5px;height:5px;border-radius:50%;background:var(--signal);flex:none}
+  .sync[data-state="saving"] i{background:var(--rule-soft)}
+  .sync[data-state="error"] i{background:var(--alert)}
+
+  /* ---------- buttons ---------- */
+  .btn{
+    font-family:var(--sans);font-size:13px;font-weight:500;
+    height:32px;padding:0 14px;border-radius:2px;
+    border:1px solid var(--rule);background:transparent;color:var(--ink);
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    cursor:pointer;transition:background .15s ease,color .15s ease,border-color .15s ease;
+  }
+  .btn:hover{background:rgba(21,24,26,.05)}
+  .btn-solid{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+  .btn-solid:hover{background:#000;border-color:#000}
+  .btn-ghost{border-color:transparent;padding:0 2px;height:auto;font-weight:500}
+  .btn-ghost:hover{background:transparent;text-decoration:underline;text-underline-offset:4px}
+  .btn-danger{color:var(--alert)}
+  .btn-wide{width:100%}
+
+  /* ---------- layout ---------- */
+  .wrap{
+    display:grid;grid-template-columns:minmax(0,1fr) var(--rail);
+    gap:var(--gap);
+    padding:44px var(--pad) 56px;
+    max-width:1440px;margin:0 auto;
+    align-items:start;
+    width:100%;
+    flex:1 0 auto;
+  }
+
+  /* ---------- hero ---------- */
+  .eyebrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .eyebrow span{
+    font-family:var(--mono);font-size:11px;font-weight:500;
+    letter-spacing:.09em;color:var(--mute);line-height:1.4;
+  }
+  .eyebrow i{display:block;width:28px;height:1px;background:#BFC2B4}
+  .eyebrow .sub{font-weight:400;letter-spacing:0}
+
+  .figure-row{display:flex;align-items:baseline;gap:20px;flex-wrap:wrap;margin-top:4px}
+  .figure{
+    font-family:var(--mono);font-weight:500;font-variant-numeric:tabular-nums;
+    font-size:clamp(46px,7vw,84px);line-height:1.1;letter-spacing:-.024em;
+    margin:0;
+  }
+  .delta{display:flex;flex-direction:column;gap:1px;padding-bottom:8px}
+  .delta b{font-family:var(--mono);font-weight:500;font-size:16px;color:var(--signal);line-height:1.3}
+  .delta b[data-dir="down"]{color:var(--alert)}
+  .delta span{font-family:var(--mono);font-size:11px;color:var(--mute);line-height:1.4}
+
+  .chart{margin:6px 0 0;height:208px}
+  .chart svg{display:block;width:100%;height:208px;overflow:visible}
+  .axis{
+    display:flex;justify-content:space-between;gap:8px;
+    list-style:none;margin:14px 0 0;padding:0;
+    font-family:var(--mono);font-size:10.5px;color:var(--mute-2);
+  }
+  .axis li:last-child{color:var(--ink);font-weight:500}
+
+  /* ---------- metrics ---------- */
+  .metrics{
+    display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr;
+    align-items:center;gap:0;
+    border-top:1px solid var(--rule);
+    margin-top:34px;padding:24px 0;
+  }
+  .metrics .vr{width:1px;height:40px;background:var(--rule)}
+  .metric{padding-right:24px}
+  .metric + .vr + .metric{padding-left:32px}
+  .metric h3{
+    font-family:var(--sans);font-size:11px;font-weight:400;letter-spacing:.09em;
+    color:var(--mute);margin:0 0 6px;
+  }
+  .metric p{
+    font-family:var(--mono);font-weight:500;font-size:30px;line-height:1.2;
+    margin:0;font-variant-numeric:tabular-nums;
+  }
+  .metric p em{font-family:var(--mono);font-style:normal;font-size:11px;font-weight:400;color:var(--mute);margin-left:6px}
+
+  /* ---------- records ---------- */
+  .records{border-top:1px solid var(--rule);padding-top:22px}
+  .section-head{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:16px;padding-bottom:14px;
+  }
+  .section-head h2{font-size:18px;font-weight:600;margin:0;line-height:1.4}
+  .section-head .tools{display:flex;align-items:center;gap:18px}
+  .section-head .tools span{font-family:var(--mono);font-size:11px;color:var(--mute-2)}
+  .filter{
+    font-family:var(--sans);font-size:12px;font-weight:500;color:var(--ink);
+    background:transparent;border:0;border-bottom:1px solid var(--rule);
+    padding:3px 14px 3px 0;cursor:pointer;appearance:none;
+    background-image:linear-gradient(45deg,transparent 50%,var(--ink) 50%),linear-gradient(135deg,var(--ink) 50%,transparent 50%);
+    background-position:calc(100% - 5px) 55%,calc(100% - 1px) 55%;
+    background-size:4px 4px,4px 4px;background-repeat:no-repeat;
+  }
+  .filter:hover{border-bottom-color:var(--ink)}
+
+  table{width:100%;border-collapse:collapse;table-layout:fixed}
+  caption{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  th{
+    font-weight:400;text-align:left;font-size:10.5px;letter-spacing:.09em;
+    color:var(--mute);padding:0 0 9px;border-bottom:1px solid var(--rule-soft);
+  }
+  td{
+    padding:0;font-size:13px;color:var(--ink-soft);
+    border-bottom:1px solid var(--rule-soft);height:52px;
+  }
+  tbody tr{transition:background .12s ease}
+  tbody tr:hover td{background:rgba(21,24,26,.028)}
+  .c-time{width:150px}
+  .c-ds{width:24%}
+  .c-metric{width:auto}
+  .c-val{width:128px;text-align:right}
+  th.c-val{padding-right:24px}
+  .c-status{width:92px}
+  .c-act{width:34px;text-align:right}
+  .c-time span{font-family:var(--mono);font-size:12px;color:var(--ink-soft);white-space:nowrap}
+  .c-ds{font-weight:500;color:var(--ink)}
+  .c-val span{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--ink);padding-right:24px}
+  .status{display:inline-flex;align-items:center;gap:7px;font-size:12px}
+  .status::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--signal);flex:none}
+  .status[data-s="check"]::before{background:var(--alert)}
+  .rowkill{
+    opacity:0;border:0;background:transparent;color:var(--mute);
+    font-family:var(--mono);font-size:14px;line-height:1;cursor:pointer;padding:6px;
+    border-radius:2px;
+  }
+  tbody tr:hover .rowkill,.rowkill:focus-visible{opacity:1}
+  .rowkill:hover{color:var(--alert)}
+  .table-foot{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding-top:12px;font-family:var(--mono);font-size:11px;color:var(--mute-2);
+  }
+  .empty{
+    padding:44px 0;text-align:left;color:var(--mute);
+  }
+  .empty strong{display:block;color:var(--ink);font-weight:500;font-size:14px;margin-bottom:4px}
+
+  /* ---------- rail ---------- */
+  .rail{display:flex;flex-direction:column;gap:28px}
+  .card{
+    background:var(--surface);border:1px solid var(--rule-hair);
+    border-radius:2px;padding:18px;
+    display:flex;flex-direction:column;gap:14px;
+  }
+  .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .card-head h2{font-size:15px;font-weight:600;margin:0;line-height:1.4}
+  .card-head .num{font-family:var(--mono);font-size:11px;color:var(--mute-2)}
+
+  .toggle{
+    width:32px;height:18px;border-radius:9px;background:var(--ink);
+    border:0;padding:3px;cursor:pointer;display:flex;justify-content:flex-end;
+    transition:background .18s ease;
+  }
+  .toggle::after{content:"";width:12px;height:12px;border-radius:50%;background:var(--surface);transition:transform .18s ease}
+  .toggle[aria-pressed="false"]{background:var(--rule-soft);justify-content:flex-start}
+
+  .usage{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:11px;color:var(--mute)}
+  .usage b{font-family:var(--mono);font-weight:500;font-size:11px;color:var(--ink)}
+  .track{height:4px;border-radius:2px;background:#DDDFD2;overflow:hidden}
+  .track > i{display:block;height:100%;background:var(--signal);border-radius:2px;transition:width .3s ease}
+
+  .kv{border-top:1px solid #DFE1D6;display:flex;flex-direction:column}
+  .kv div{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    height:32px;font-size:11.5px;color:var(--mute);
+  }
+  .kv div + div{border-top:1px solid #DFE1D6}
+  .kv b{font-family:var(--mono);font-weight:400;font-size:11.5px;color:var(--ink)}
+  .card-actions{display:flex;gap:8px}
+  .card-actions .btn{flex:1;height:34px}
+
+  .ds-row{display:flex;align-items:center;justify-content:space-between;gap:12px;height:26px;font-size:12.5px}
+  .ds-row span:last-child{font-family:var(--mono);font-size:11px;color:var(--mute-2)}
+  .note{font-size:11.5px;line-height:1.75;color:var(--mute);margin:0;padding:0 2px}
+
+  /* ---------- dialog ---------- */
+  dialog{
+    border:1px solid var(--rule);border-radius:2px;background:var(--surface);
+    padding:24px;width:min(420px,calc(100vw - 32px));color:var(--ink);
+  }
+  dialog::backdrop{background:rgba(21,24,26,.35)}
+  dialog h2{font-size:16px;font-weight:600;margin:0 0 18px}
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+  .field label{font-size:11px;letter-spacing:.09em;color:var(--mute)}
+  .field input,.field select{
+    font-family:var(--mono);font-size:14px;color:var(--ink);
+    background:var(--paper);border:1px solid var(--rule);border-radius:2px;
+    height:38px;padding:0 10px;width:100%;
+  }
+  .field select{font-family:var(--sans)}
+  .field input:focus,.field select:focus{outline:2px solid var(--ink);outline-offset:0;border-color:var(--ink)}
+  .field-row{display:grid;grid-template-columns:1fr 96px;gap:10px}
+  .hint{font-size:11px;color:var(--mute);margin:0 0 18px;line-height:1.6}
+  dialog menu{display:flex;justify-content:flex-end;gap:8px;margin:0;padding:0}
+
+  /* ---------- footer ---------- */
+  .foot{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:0 var(--pad);height:60px;border-top:1px solid var(--rule);
+    font-family:var(--mono);font-size:11px;color:var(--mute);
+  }
+  .foot .claim{font-family:var(--sans)}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:1080px){
+    :root{--pad:28px}
+    .wrap{grid-template-columns:minmax(0,1fr);gap:36px}
+    .rail{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+    .note{grid-column:1 / -1}
+  }
+  @media (max-width:860px){
+    .stamp{display:none}
+    .nav{gap:20px}
+  }
+  @media (max-width:720px){
+    :root{--pad:20px}
+    .bar-in{height:56px;gap:16px;padding:0 var(--pad)}
+    .bar-sep{display:none}
+    .nav{display:none}
+    .bar-right{gap:12px;margin-left:auto}
+    .mark{font-size:15px}
+    .wrap{padding:22px var(--pad) 32px;gap:28px}
+    .figure{font-size:44px;letter-spacing:-.02em}
+    .chart,.chart svg{height:116px}
+    .metrics{grid-template-columns:1fr 1px 1fr 1px 1fr;padding:16px 0;margin-top:22px}
+    .metric{padding-right:10px}
+    .metric + .vr + .metric{padding-left:14px}
+    .metric h3{font-size:10px;letter-spacing:.04em}
+    .metric p{font-size:22px}
+    .metric p em{font-size:10px;margin-left:4px}
+    .metrics .vr{height:30px}
+    .rail{grid-template-columns:1fr;gap:18px}
+    .c-time{width:92px}
+    .c-time span{font-size:11px}
+    .c-metric{display:none}
+    .c-val{width:84px}
+    .c-status{width:62px}
+    .c-ds{width:auto}
+    .c-val span{padding-right:10px;font-size:13px}
+    td{height:52px}
+    .rowkill{opacity:1}
+    .section-head h2{font-size:15px}
+    .foot{height:52px;font-size:10px;padding:0 var(--pad)}
+    .foot .claim{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+  }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="bar-in">
+    <a class="mark" href="#top" aria-label="hellocl 首页">hellocl</a>
+    <span class="bar-sep" aria-hidden="true"></span>
+    <nav class="nav" aria-label="主导航">
+      <a href="#overview" aria-current="page">概览</a>
+      <a href="#records">数据表</a>
+      <a href="#storage">存储</a>
+      <a href="#about">关于</a>
+    </nav>
+    <div class="bar-right">
+      <span class="stamp" id="stamp">2026.11.06 · FRI</span>
+      <span class="sync" id="sync" data-state="ok"><i aria-hidden="true"></i><span id="syncText">已保存</span></span>
+      <button class="btn btn-solid" type="button" id="openAdd">记一条</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="top">
+
+  <div class="col-main">
+    <section id="overview" aria-labelledby="heroLabel">
+      <div class="eyebrow">
+        <span id="heroLabel">总读数 TOTAL</span>
+        <i aria-hidden="true"></i>
+        <span class="sub">近 30 天 · 全部数据集</span>
+      </div>
+
+      <div class="figure-row">
+        <p class="figure" id="total">1,284,930</p>
+        <div class="delta">
+          <b id="deltaVal">+12.4%</b>
+          <span>环比上月</span>
+        </div>
+      </div>
+
+      <figure class="chart" id="chart" aria-label="近 30 天每日读数趋势图" role="img"></figure>
+      <ol class="axis" id="axis" aria-hidden="true"></ol>
+    </section>
+
+    <section class="metrics" aria-label="关键指标">
+      <div class="metric">
+        <h3>今日录入</h3>
+        <p id="mToday">128<em>条</em></p>
+      </div>
+      <div class="vr" aria-hidden="true"></div>
+      <div class="metric">
+        <h3>活跃数据集</h3>
+        <p id="mSets">12<em>个</em></p>
+      </div>
+      <div class="vr" aria-hidden="true"></div>
+      <div class="metric">
+        <h3>存储占用</h3>
+        <p id="mBytes">0.38<em>GB</em></p>
+      </div>
+    </section>
+
+    <section class="records" id="records" aria-labelledby="recTitle">
+      <div class="section-head">
+        <h2 id="recTitle">最近记录</h2>
+        <div class="tools">
+          <span>近 7 天</span>
+          <label class="sr" for="filterDs">按数据集筛选</label>
+          <select id="filterDs" class="filter">
+            <option value="">全部数据集</option>
+          </select>
+        </div>
+      </div>
+
+      <table>
+        <caption>最近录入的数据记录</caption>
+        <thead>
+          <tr>
+            <th class="c-time" scope="col">时间</th>
+            <th class="c-ds" scope="col">数据集</th>
+            <th class="c-metric" scope="col">指标</th>
+            <th class="c-val" scope="col">数值</th>
+            <th class="c-status" scope="col">状态</th>
+            <th class="c-act" scope="col"><span class="sr">操作</span></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+
+      <div class="table-foot">
+        <span id="footCount">共 5 条记录</span>
+        <a class="mono" href="#records" id="footLink" style="color:var(--ink);font-size:12px;font-family:var(--sans);font-weight:500">打开数据表 →</a>
+      </div>
+    </section>
+  </div>
+
+  <aside class="rail" id="storage" aria-label="数据保存">
+    <div class="card">
+      <div class="card-head">
+        <h2>数据保存</h2>
+        <button class="toggle" id="autoSave" type="button" aria-pressed="true" aria-label="自动保存"></button>
+      </div>
+
+      <div class="usage">
+        <span>存储用量</span>
+        <b id="usageText">38.2 MB / 1 GB</b>
+      </div>
+      <div class="track" role="progressbar" aria-label="存储用量" aria-valuemin="0" aria-valuemax="100" aria-valuenow="4" id="track">
+        <i id="trackFill" style="width:4%"></i>
+      </div>
+
+      <div class="kv">
+        <div><span>自动保存</span><b id="kvAuto">每 5 分钟</b></div>
+        <div><span>上次备份</span><b id="kvBackup">尚未备份</b></div>
+        <div><span>存储位置</span><b>浏览器本地</b></div>
+      </div>
+
+      <div class="card-actions">
+        <button class="btn" type="button" id="exportBtn">导出 CSV</button>
+        <button class="btn btn-solid" type="button" id="backupBtn">立即备份</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>已连接的数据集</h2>
+        <span class="num" id="dsCount">12</span>
+      </div>
+      <div id="dsList"></div>
+      <button class="btn btn-ghost" type="button" id="importBtn" style="align-self:flex-start">导入备份</button>
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </div>
+
+    <p class="note">数据只存在这台设备的浏览器里，不上传服务器。随时导出 CSV 或 JSON，换设备时导入即可。<br><button class="btn btn-ghost btn-danger" type="button" id="clearBtn" style="font-size:11.5px;margin-top:2px">清空全部记录</button></p>
+  </aside>
+</main>
+
+<footer class="foot" id="about">
+  <span>hellocl.dpdns.org</span>
+  <span class="claim">本地优先 · 不追踪</span>
+  <span>v1.0 · 2026</span>
+</footer>
+
+<dialog id="addDialog" aria-labelledby="addTitle">
+  <form id="addForm">
+    <h2 id="addTitle">记一条</h2>
+    <div class="field">
+      <label for="fDataset">数据集</label>
+      <select id="fDataset">
+        <option>站点流量</option>
+        <option>服务器</option>
+        <option>订阅</option>
+        <option>存储</option>
+        <option>内容</option>
+        <option>其他</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="fMetric">指标</label>
+      <input id="fMetric" required placeholder="访问量 UV" autocomplete="off">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="fValue">数值</label>
+        <input id="fValue" type="number" step="any" required placeholder="0" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label for="fUnit">单位</label>
+        <input id="fUnit" placeholder="次" autocomplete="off">
+      </div>
+    </div>
+    <div class="field">
+      <label for="fStatus">状态</label>
+      <select id="fStatus">
+        <option value="ok">正常</option>
+        <option value="check">待核</option>
+      </select>
+    </div>
+    <p class="hint">数值会累加进「总读数」，并计入今天的读数。</p>
+    <menu>
+      <button class="btn" type="button" id="cancelAdd">取消</button>
+      <button class="btn btn-solid" type="submit">保存</button>
+    </menu>
+  </form>
+</dialog>
+
+<div class="sr" id="live" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var KEY = "hellocl.data.v1";
+  var DAY = 86400000;
+
+  var seedSeries = [430,455,480,462,510,540,520,565,590,575,620,600,645,670,650,
+                    690,610,655,590,700,645,720,690,700,745,680,790,735,810,721];
+
+  var seedRecords = [
+    {id:"r5", ts: Date.now()-40*60000,          dataset:"站点流量", metric:"访问量 UV",  value:8420, unit:"",   status:"ok"},
+    {id:"r4", ts: Date.now()-3*3600000,          dataset:"服务器",   metric:"响应时间",   value:128,  unit:"ms", status:"ok"},
+    {id:"r3", ts: Date.now()-5*3600000,          dataset:"订阅",     metric:"新增订阅",   value:36,   unit:"",   status:"ok"},
+    {id:"r2", ts: Date.now()-7*3600000,          dataset:"存储",     metric:"占用容量",   value:0.38, unit:"GB", status:"ok"},
+    {id:"r1", ts: Date.now()-18*3600000,         dataset:"内容",     metric:"发布篇数",   value:4,    unit:"",   status:"check"}
+  ];
+
+  var state = load();
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(raw){
+        var d = JSON.parse(raw);
+        if(d && Array.isArray(d.series) && Array.isArray(d.records)) return d;
+      }
+    }catch(e){ /* corrupted or blocked storage → fall back to seed */ }
+    return {
+      total: 1284930,
+      series: seedSeries.slice(),
+      records: seedRecords.slice(),
+      backupAt: null,
+      autoSave: true
+    };
+  }
+
+  function save(){
+    sync("saving");
+    try{
+      localStorage.setItem(KEY, JSON.stringify(state));
+      var t = new Date();
+      sync("ok", "已保存 " + pad(t.getHours()) + ":" + pad(t.getMinutes()));
+    }catch(e){
+      sync("error", "未能保存");
+    }
+  }
+
+  function sync(stateName, text){
+    var el = document.getElementById("sync");
+    el.dataset.state = stateName;
+    document.getElementById("syncText").textContent = text || (stateName === "saving" ? "保存中" : "已保存");
+  }
+
+  function pad(n){ return n < 10 ? "0" + n : "" + n; }
+
+  function nf(n){
+    return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+
+  function fmtValue(v){
+    return (Number.isInteger(v) ? String(v) : v.toFixed(2)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+
+  function fmtTime(ts){
+    var d = new Date(ts), now = new Date();
+    var sameDay = d.toDateString() === now.toDateString();
+    var day = (d.getMonth()+1) + "/" + pad(d.getDate());
+    return (sameDay ? "" : day + " · ") + pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+
+  function fmtDate(ts){
+    var d = new Date(ts);
+    return (d.getMonth()+1) + "/" + pad(d.getDate());
+  }
+
+  /* ---------- chart ---------- */
+  function drawChart(){
+    var s = state.series, W = 1000, H = 208, top = 12, bottom = H - 6;
+    var min = Math.min.apply(null, s), max = Math.max.apply(null, s);
+    var span = (max - min) || 1;
+    var n = s.length;
+    var x = function(i){ return (i / (n - 1)) * W; };
+    var y = function(v){ return top + (1 - (v - min) / span) * (bottom - top); };
+
+    var pts = s.map(function(v, i){ return x(i).toFixed(1) + "," + y(v).toFixed(1); });
+    var line = "M" + pts.join("L");
+    var area = line + "L" + W + "," + H + "L0," + H + "Z";
+
+    var grid = "";
+    [0, 1, 2, 3].forEach(function(i){
+      var gy = (top + (bottom - top) * (i / 3)).toFixed(1);
+      grid += '<path d="M0,' + gy + "H" + W + '" stroke="#CFD1C6" stroke-width="1" stroke-dasharray="2 5" vector-effect="non-scaling-stroke"/>';
+    });
+
+    var lx = x(n - 1), ly = y(s[n - 1]);
+
+    document.getElementById("chart").innerHTML =
+      '<svg viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<g vector-effect="non-scaling-stroke">' + grid + "</g>" +
+        '<path d="' + area + '" fill="#1F35A8" fill-opacity="0.07"/>' +
+        '<path d="' + line + '" stroke="#1F35A8" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' +
+        '<circle cx="' + (lx - 2) + '" cy="' + ly + '" r="9" fill="#1F35A8" fill-opacity="0.12"/>' +
+        '<circle cx="' + (lx - 2) + '" cy="' + ly + '" r="3.5" fill="#1F35A8"/>' +
+      "</svg>";
+
+    var ticks = [0, Math.round((n - 1) * 0.24), Math.round((n - 1) * 0.48), Math.round((n - 1) * 0.72), n - 1];
+    var today = Date.now();
+    document.getElementById("axis").innerHTML = ticks.map(function(i){
+      var ts = today - (n - 1 - i) * DAY;
+      return "<li>" + fmtDate(ts) + "</li>";
+    }).join("");
+  }
+
+  /* ---------- numbers ---------- */
+  function drawStats(){
+    document.getElementById("total").textContent = nf(state.total);
+
+    var s = state.series, n = s.length;
+    var last7 = s.slice(n - 7).reduce(function(a, b){ return a + b; }, 0);
+    var prev7 = s.slice(n - 14, n - 7).reduce(function(a, b){ return a + b; }, 0);
+    var pct = prev7 ? ((last7 - prev7) / prev7) * 100 : 0;
+    var el = document.getElementById("deltaVal");
+    el.textContent = (pct >= 0 ? "+" : "") + pct.toFixed(1) + "%";
+    el.dataset.dir = pct >= 0 ? "up" : "down";
+
+    var today = new Date().toDateString();
+    var todayCount = state.records.filter(function(r){
+      return new Date(r.ts).toDateString() === today;
+    }).length;
+    document.getElementById("mToday").innerHTML = todayCount + "<em>条</em>";
+
+    var sets = {};
+    state.records.forEach(function(r){ sets[r.dataset] = true; });
+    var setCount = Math.max(Object.keys(sets).length, 0);
+    document.getElementById("mSets").innerHTML = setCount + "<em>个</em>";
+
+    var bytes = new Blob([JSON.stringify(state)]).size;
+    var mb = bytes / 1048576;
+    document.getElementById("mBytes").innerHTML =
+      mb < 1 ? (bytes / 1024).toFixed(1) + "<em>KB</em>" : mb.toFixed(2) + "<em>MB</em>";
+
+    var pctUsed = Math.max(0.6, Math.min(100, (bytes / 1073741824) * 100));
+    document.getElementById("trackFill").style.width = pctUsed + "%";
+    document.getElementById("track").setAttribute("aria-valuenow", Math.round(pctUsed));
+    document.getElementById("usageText").textContent = kb(bytes) + " / 1 GB";
+
+    var bySet = {};
+    state.records.forEach(function(r){ bySet[r.dataset] = (bySet[r.dataset] || 0) + 1; });
+    var keys = Object.keys(bySet);
+    document.getElementById("dsCount").textContent = keys.length;
+    document.getElementById("dsList").innerHTML = keys.length
+      ? keys.map(function(k){
+          return '<div class="ds-row"><span>' + esc(k) + "</span><span>" + bySet[k] + "</span></div>";
+        }).join("")
+      : '<div class="ds-row"><span>还没有数据集</span><span>0</span></div>';
+
+    var sel = document.getElementById("filterDs");
+    sel.innerHTML = '<option value="">全部数据集</option>' + keys.map(function(k){
+      return '<option value="' + esc(k) + '">' + esc(k) + "</option>";
+    }).join("");
+    if(keys.indexOf(filter) >= 0){ sel.value = filter; } else { sel.value = ""; filter = ""; }
+  }
+
+  function kb(b){
+    if(b < 1024) return b + " B";
+    if(b < 1048576) return (b / 1024).toFixed(1) + " KB";
+    return (b / 1048576).toFixed(2) + " MB";
+  }
+
+  function esc(s){
+    return String(s).replace(/[&<>"]/g, function(c){
+      return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c];
+    });
+  }
+
+  /* ---------- table ---------- */
+  var filter = "";
+
+  function drawRows(){
+    var body = document.getElementById("rows");
+    var recs = state.records.slice().sort(function(a, b){ return b.ts - a.ts; });
+    if(filter) recs = recs.filter(function(r){ return r.dataset === filter; });
+
+    if(!recs.length){
+      body.innerHTML = '<tr><td colspan="6"><div class="empty"><strong>' +
+        (filter ? "这个数据集还没有记录" : "还没有记录") + "</strong>" +
+        (filter ? "换个数据集看看，或记一条新的。" : "点右上角「记一条」，第一条数据就从这里开始。") +
+        "</div></td></tr>";
+    }else{
+      body.innerHTML = recs.map(function(r){
+        var unit = r.unit ? " " + esc(r.unit) : "";
+        return '<tr data-id="' + r.id + '">' +
+          '<td class="c-time"><span>' + fmtTime(r.ts) + "</span></td>" +
+          '<td class="c-ds">' + esc(r.dataset) + "</td>" +
+          '<td class="c-metric">' + esc(r.metric) + "</td>" +
+          '<td class="c-val"><span>' + fmtValue(r.value) + unit + "</span></td>" +
+          '<td class="c-status"><span class="status" data-s="' + (r.status === "check" ? "check" : "ok") + '">' +
+            (r.status === "check" ? "待核" : "正常") + "</span></td>" +
+          '<td class="c-act"><button class="rowkill" type="button" aria-label="删除这条记录" data-kill="' + r.id + '">×</button></td>' +
+        "</tr>";
+      }).join("");
+    }
+
+    document.getElementById("footCount").textContent =
+      "共 " + recs.length + " 条记录" + (filter ? " · " + filter : "");
+  }
+
+  function render(){
+    drawChart();
+    drawStats();
+    drawRows();
+    document.getElementById("kvAuto").textContent = state.autoSave ? "每 5 分钟" : "已关闭";
+    document.getElementById("autoSave").setAttribute("aria-pressed", state.autoSave ? "true" : "false");
+    if(state.backupAt){
+      var d = new Date(state.backupAt);
+      document.getElementById("kvBackup").textContent =
+        (d.toDateString() === new Date().toDateString() ? "今天 " : fmtDate(state.backupAt) + " ") +
+        pad(d.getHours()) + ":" + pad(d.getMinutes());
+    }
+  }
+
+  /* ---------- interactions ---------- */
+  document.getElementById("openAdd").addEventListener("click", function(){
+    var d = document.getElementById("addDialog");
+    if(typeof d.showModal === "function") d.showModal(); else d.setAttribute("open", "");
+    document.getElementById("fMetric").focus();
+  });
+
+  document.getElementById("cancelAdd").addEventListener("click", function(){
+    closeDialog();
+  });
+
+  function closeDialog(){
+    var d = document.getElementById("addDialog");
+    if(typeof d.close === "function") d.close(); else d.removeAttribute("open");
+    document.getElementById("addForm").reset();
+  }
+
+  document.getElementById("addForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var value = parseFloat(document.getElementById("fValue").value);
+    if(!isFinite(value)) return;
+
+    var rec = {
+      id: "r" + Date.now(),
+      ts: Date.now(),
+      dataset: document.getElementById("fDataset").value,
+      metric: document.getElementById("fMetric").value.trim() || "未命名指标",
+      value: value,
+      unit: document.getElementById("fUnit").value.trim(),
+      status: document.getElementById("fStatus").value
+    };
+
+    state.records.unshift(rec);
+    state.total += value;
+    state.series[state.series.length - 1] += value;
+
+    save();
+    render();
+    closeDialog();
+    document.getElementById("live").textContent = "已保存：" + rec.dataset + " " + rec.metric;
+  });
+
+  document.getElementById("rows").addEventListener("click", function(e){
+    var btn = e.target.closest("[data-kill]");
+    if(!btn) return;
+    var id = btn.getAttribute("data-kill");
+    state.records = state.records.filter(function(r){ return r.id !== id; });
+    save(); render();
+    document.getElementById("live").textContent = "已删除一条记录";
+  });
+
+  document.getElementById("autoSave").addEventListener("click", function(){
+    state.autoSave = !state.autoSave;
+    save(); render();
+  });
+
+  document.getElementById("filterDs").addEventListener("change", function(e){
+    filter = e.target.value;
+    drawRows();
+  });
+
+  document.getElementById("exportBtn").addEventListener("click", function(){
+    var head = "时间,数据集,指标,数值,单位,状态\n";
+    var body = state.records.map(function(r){
+      return [new Date(r.ts).toISOString(), r.dataset, r.metric, r.value, r.unit, r.status]
+        .map(function(v){ return '"' + String(v).replace(/"/g, '""') + '"'; }).join(",");
+    }).join("\n");
+
+    var blob = new Blob(["\ufeff" + head + body], {type: "text/csv;charset=utf-8"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "hellocl-" + new Date().toISOString().slice(0, 10) + ".csv";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    document.getElementById("live").textContent = "CSV 已导出";
+  });
+
+  document.getElementById("backupBtn").addEventListener("click", function(){
+    state.backupAt = Date.now();
+    save();
+    try{
+      localStorage.setItem(KEY + ".backup", JSON.stringify({total: state.total, series: state.series, records: state.records, at: state.backupAt}));
+      render();
+      document.getElementById("live").textContent = "已备份到本地";
+    }catch(e){
+      sync("error", "备份失败");
+    }
+  });
+
+  document.getElementById("importBtn").addEventListener("click", function(){
+    document.getElementById("importFile").click();
+  });
+
+  document.getElementById("importFile").addEventListener("change", function(e){
+    var f = e.target.files && e.target.files[0];
+    if(!f) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try{
+        var d = JSON.parse(reader.result);
+        if(Array.isArray(d.records)){
+          state.records = d.records;
+          if(typeof d.total === "number") state.total = d.total;
+          if(Array.isArray(d.series) && d.series.length === 30) state.series = d.series;
+          save(); render();
+          document.getElementById("live").textContent = "已导入 " + d.records.length + " 条记录";
+        }
+      }catch(err){
+        sync("error", "文件读不了");
+      }
+      e.target.value = "";
+    };
+    reader.readAsText(f);
+  });
+
+  document.getElementById("clearBtn").addEventListener("click", function(){
+    if(!confirm("清空全部记录？总读数和趋势也会一起归零。此操作不可撤销。")) return;
+    state.records = [];
+    state.total = 0;
+    state.series = state.series.map(function(){ return 0; });
+    state.backupAt = null;
+    save(); render();
+    document.getElementById("live").textContent = "已清空全部记录";
+  });
+
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape" && document.getElementById("addDialog").hasAttribute("open")) closeDialog();
+  });
+
+  /* ---------- boot ---------- */
+  (function stamp(){
+    var d = new Date();
+    var names = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
+    document.getElementById("stamp").textContent =
+      d.getFullYear() + "." + pad(d.getMonth() + 1) + "." + pad(d.getDate()) + " · " + names[d.getDay()];
+  })();
+
+  render();
+  var d = new Date();
+  sync("ok", "已保存 " + pad(d.getHours()) + ":" + pad(d.getMinutes()));
+})();
+</script>
+</body>
+</html>
