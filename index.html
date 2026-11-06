@@ -243,6 +243,14 @@
   }
   .table-foot a{font-family:var(--sans);font-size:14px;font-weight:600;color:var(--blue)}
   .table-foot a:hover{color:var(--blue-deep);text-decoration:underline;text-underline-offset:4px}
+  .foot-toggle{
+    font-family:var(--sans);font-size:14px;font-weight:600;color:var(--blue);
+    background:var(--blue-soft);border:0;border-radius:var(--pill);
+    padding:8px 16px;cursor:pointer;
+    transition:background .2s ease,color .2s ease,transform .18s ease;
+  }
+  .foot-toggle:hover{background:#DFE9FF;color:var(--blue-deep);transform:translateY(-1px)}
+  .foot-toggle[hidden]{display:none}
   .empty{padding:48px 0;color:var(--mute)}
   .empty strong{display:block;color:var(--ink);font-weight:600;font-size:15px;margin-bottom:5px}
 
@@ -507,7 +515,7 @@
 
       <div class="table-foot">
         <span id="footCount">共 0 条记录</span>
-        <a href="#records" id="footLink">打开数据表 →</a>
+        <button class="foot-toggle" type="button" id="rowToggle" aria-expanded="false" aria-controls="rows">展开 30 条</button>
       </div>
     </section>
   </div>
@@ -576,7 +584,7 @@
 <footer class="foot" id="about">
   <span>hellocl.dpdns.org</span>
   <span class="claim">本地优先 · 不追踪</span>
-  <span>v1.1 · 2026</span>
+  <span>v1.2 · 2026</span>
 </footer>
 
 <dialog id="addDialog" aria-labelledby="addTitle">
@@ -890,18 +898,26 @@
   }
 
   /* ---------- rows ---------- */
+  var SHUT_ROWS = 5;
+  var OPEN_ROWS = 30;
+  var expanded = false;
+
   function drawRows(){
     var body = document.getElementById("rows");
     var recs = state.records.slice().sort(function(a, b){ return b.ts - a.ts; });
     if(filter) recs = recs.filter(function(r){ return r.dataset === filter; });
 
-    if(!recs.length){
+    var total = recs.length;
+    var limit = expanded ? OPEN_ROWS : SHUT_ROWS;
+    var shown = recs.slice(0, limit);
+
+    if(!total){
       body.innerHTML = '<tr><td colspan="7"><div class="empty"><strong>' +
         (filter ? "这个数据集还没有记录" : "还没有记录") + "</strong>" +
         (filter ? "换个数据集看看，或记一条新的。" : "点右上角「记一条」，第一条数据就从这里开始。") +
         "</div></td></tr>";
     }else{
-      body.innerHTML = recs.map(function(r){
+      body.innerHTML = shown.map(function(r){
         var unit = r.unit ? " " + esc(r.unit) : "";
         var note = r.note ? esc(r.note) : "";
         return '<tr data-id="' + r.id + '">' +
@@ -918,9 +934,33 @@
       }).join("");
     }
 
+    var hidden = total - shown.length;
     document.getElementById("footCount").textContent =
-      "共 " + recs.length + " 条记录" + (filter ? " · " + filter : "");
+      "共 " + total + " 条记录" + (filter ? " · " + filter : "") +
+      (hidden > 0 ? " · 当前显示最近 " + shown.length + " 条" : "");
+
+    var tg = document.getElementById("rowToggle");
+    if(total <= SHUT_ROWS){
+      tg.hidden = true;
+    }else{
+      tg.hidden = false;
+      tg.textContent = expanded ? "收起" : ("展开 " + Math.min(OPEN_ROWS, total) + " 条");
+      tg.setAttribute("aria-expanded", expanded ? "true" : "false");
+    }
   }
+
+  document.getElementById("rowToggle").addEventListener("click", function(){
+    expanded = !expanded;
+    var body = document.getElementById("rows");
+    if(reduceMotion){ drawRows(); return; }
+    body.style.transition = "opacity .14s ease";
+    body.style.opacity = "0";
+    window.setTimeout(function(){
+      drawRows();
+      body.style.opacity = "1";
+      document.getElementById("live").textContent = expanded ? "已展开最近 " + OPEN_ROWS + " 条" : "已收起记录";
+    }, 140);
+  });
 
   function render(animate){
     drawChart(animate);
