@@ -294,8 +294,10 @@
   }
   .kv div + div{border-top:1px solid var(--blue-line)}
   .kv b{font-family:var(--mono);font-weight:500;font-size:13px;color:var(--ink)}
-  .card-actions{display:flex;gap:10px}
+  .card-actions{display:flex;gap:10px;flex-wrap:wrap}
   .card-actions .btn{flex:1;height:40px}
+  .card-actions .btn-wide{flex:1 0 100%}
+  .btn-done{background:var(--blue-soft)!important;border-color:var(--blue-line)!important;color:var(--blue-deep)!important;box-shadow:none!important}
 
   .ds-row{display:flex;align-items:center;justify-content:space-between;gap:12px;height:32px;font-size:14px}
   .ds-row span:last-child{font-family:var(--mono);font-size:12.5px;color:var(--mute-2)}
@@ -551,7 +553,8 @@
 
       <div class="card-actions">
         <button class="btn" type="button" id="exportBtn">导出 CSV</button>
-        <button class="btn btn-solid" type="button" id="backupBtn">立即备份</button>
+        <button class="btn" type="button" id="exportJsonBtn">导出 JSON</button>
+        <button class="btn btn-solid btn-wide" type="button" id="backupBtn">立即备份</button>
       </div>
     </div>
 
@@ -763,6 +766,60 @@
     return String(s).replace(/[&<>"]/g, function(c){
       return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];
     });
+  }
+
+  /* ---------- download helpers ---------- */
+  function stamp(ts){
+    var d = new Date(ts);
+    if(isNaN(d.getTime())) d = new Date();
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
+           " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+  }
+  function fileDay(){
+    var d = new Date();
+    return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate());
+  }
+
+  // 触发浏览器下载。三个坑都在这里处理掉了：
+  // 1) 链接必须挂到文档里，否则 Safari / 部分 Firefox 不认 click
+  // 2) objectURL 不能在 click 后立刻 revoke，要等浏览器开始收流
+  // 3) 任何异常都返回 false，交给调用方提示，而不是静默失败
+  function download(name, text, mime){
+    var url = null, a = null;
+    try{
+      var blob = new Blob([text], {type: mime || "text/plain;charset=utf-8"});
+      url = URL.createObjectURL(blob);
+      a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      a.rel = "noopener";
+      a.style.position = "fixed";
+      a.style.left = "-9999px";
+      a.style.top = "0";
+      document.body.appendChild(a);
+      a.click();
+      window.setTimeout(function(){
+        if(a && a.parentNode) a.parentNode.removeChild(a);
+        if(url) URL.revokeObjectURL(url);
+      }, 2500);
+      return true;
+    }catch(e){
+      if(a && a.parentNode) a.parentNode.removeChild(a);
+      if(url) URL.revokeObjectURL(url);
+      return false;
+    }
+  }
+
+  function flash(btn, text){
+    if(!btn) return;
+    var old = btn.getAttribute("data-label") || btn.textContent;
+    btn.setAttribute("data-label", old);
+    btn.textContent = text;
+    btn.classList.add("btn-done");
+    window.setTimeout(function(){
+      btn.textContent = btn.getAttribute("data-label") || old;
+      btn.classList.remove("btn-done");
+    }, 1600);
   }
 
   /* ---------- window maths ---------- */
@@ -1108,32 +1165,66 @@
   });
 
   document.getElementById("exportBtn").addEventListener("click", function(){
-    var head = "时间,数据集,指标,备注,数值,单位,状态\n";
-    var body = state.records.map(function(r){
-      return [new Date(r.ts).toISOString(), r.dataset, r.metric, r.note || "", r.value, r.unit, r.status]
-        .map(function(v){ return '"' + String(v).replace(/"/g, '""') + '"'; }).join(",");
-    }).join("\n");
+    var btn = this;
+    var rows = state.records.slice().sort(function(a, b){ return a.ts - b.ts; });
+    var lines = ["时间,数据集,指标,备注,数值,单位,状态"];
+    rows.forEach(function(r){
+      lines.push([stamp(r.ts), r.dataset, r.metric, r.note || "", r.value, r.unit,
+                  r.status === "check" ? "待核" : "正常"]
+        .map(function(v){ return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"'; }).join(","));
+    });
+    var ok = download("hellocl-" + fileDay() + ".csv", "\ufeff" + lines.join("\r\n"),
+                      "text/csv;charset=utf-8");
+    if(ok){
+      sync("ok", "已导出 " + rows.length + " 条为 CSV");
+      flash(btn, "已下载 " + rows.length + " 条");
+    }else{
+      sync("error", "导出失败，请换浏览器再试");
+      flash(btn, "导出失败");
+    }
+  });
 
-    var blob = new Blob(["\ufeff" + head + body], {type: "text/csv;charset=utf-8"});
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "hellocl-" + new Date().toISOString().slice(0, 10) + ".csv";
-    a.click();
-    URL.revokeObjectURL(a.href);
-    document.getElementById("live").textContent = "CSV 已导出";
+  document.getElementById("exportJsonBtn").addEventListener("click", function(){
+    var btn = this;
+    var payload = {
+      app: "hellocl",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      records: state.records,
+      series: state.series
+    };
+    var ok = download("hellocl-" + fileDay() + ".json", JSON.stringify(payload, null, 2),
+                      "application/json;charset=utf-8");
+    if(ok){
+      sync("ok", "已导出 " + state.records.length + " 条为 JSON");
+      flash(btn, "已下载");
+    }else{
+      sync("error", "导出失败，请换浏览器再试");
+      flash(btn, "导出失败");
+    }
   });
 
   document.getElementById("backupBtn").addEventListener("click", function(){
+    var btn = this;
     state.backupAt = Date.now();
     save();
+    var snapshot = { app: "hellocl", version: 1, at: state.backupAt,
+                     series: state.series, records: state.records };
     try{
-      localStorage.setItem(KEY + ".backup", JSON.stringify({
-        series: state.series, records: state.records, at: state.backupAt
-      }));
-      render(false);
-      document.getElementById("live").textContent = "已备份到本地";
+      localStorage.setItem(KEY + ".backup", JSON.stringify(snapshot));
     }catch(e){
-      sync("error", "备份失败");
+      sync("error", "本地快照写入失败");
+    }
+    // 同时落一份文件到磁盘：本地快照会随浏览器数据一起丢，文件不会
+    var ok = download("hellocl-backup-" + fileDay() + ".json",
+                      JSON.stringify(snapshot, null, 2), "application/json;charset=utf-8");
+    render(false);
+    if(ok){
+      sync("ok", "已备份并下载到本地");
+      flash(btn, "已备份 + 已下载");
+    }else{
+      sync("ok", "已备份到浏览器（下载被拦截）");
+      flash(btn, "已备份（未下载）");
     }
   });
 
