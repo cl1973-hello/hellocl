@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>hellocl · 数据台</title>
-<meta name="description" content="hellocl 的个人数据台：看数据，记数据，都存在你自己的浏览器里。">
+<meta name="description" content="hellocl 的个人数据台：上传 CSV / Excel / JSON，原格式保存在你自己的浏览器里。">
 <meta name="theme-color" content="#FFFFFF">
 <meta property="og:type" content="website">
 <meta property="og:title" content="hellocl · 数据台">
-<meta property="og:description" content="一个只属于你的数据台：一条趋势线、一张记录表、一份存在本地的备份。">
+<meta property="og:description" content="上传数据文件，看清每个文件有多少条、占多少空间。全部存在本机，不上传服务器。">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563EB'/%3E%3Cpath d='M9 22V11M9 16.5h8M17 22V11' stroke='white' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -112,12 +112,18 @@
 
   /* ---------- layout ---------- */
   .wrap{
-    display:grid;grid-template-columns:minmax(0,1fr) var(--rail);
-    gap:var(--gap);
     padding:40px var(--pad) 64px;
     max-width:1500px;margin:0 auto;width:100%;
-    align-items:start;flex:1 0 auto;
+    flex:1 0 auto;
   }
+  .pane{display:none}
+  .pane.is-on{
+    display:grid;grid-template-columns:minmax(0,1fr) var(--rail);
+    gap:var(--gap);align-items:start;
+    animation:paneIn .42s cubic-bezier(.22,.61,.36,1) both;
+  }
+  .pane.solo{grid-template-columns:minmax(0,1fr);gap:0}
+  @keyframes paneIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 
   /* ---------- hero ---------- */
   .hero-top{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:6px}
@@ -366,10 +372,119 @@
   .foot .claim{font-family:var(--sans)}
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
+  /* ---------- page head ---------- */
+  .page-head{padding-bottom:22px;border-bottom:1px solid var(--rule);margin-bottom:28px}
+  .page-head h1{font-size:clamp(27px,3.2vw,36px);font-weight:700;letter-spacing:-.025em;line-height:1.22;margin:0 0 9px}
+  .page-head p{margin:0;font-size:14.5px;font-weight:400;line-height:1.8;color:var(--mute);max-width:66ch}
+
+  /* ---------- uploader ---------- */
+  .drop{
+    border:1.5px dashed var(--blue-line);border-radius:var(--r-lg);
+    background:linear-gradient(180deg,#F8FAFF 0%,#FFFFFF 72%);
+    padding:30px 24px;text-align:center;cursor:pointer;
+    transition:border-color .2s ease,background .2s ease,transform .18s ease,box-shadow .2s ease;
+  }
+  .drop:hover{border-color:var(--blue);background:#F4F8FF;box-shadow:0 12px 28px -22px rgba(37,99,235,.7)}
+  .drop b{display:block;font-size:15.5px;font-weight:600;color:var(--ink);margin-bottom:5px}
+  .drop span{font-size:13px;font-weight:400;color:var(--mute)}
+  .drop em{font-style:normal;color:var(--blue);font-weight:600}
+  .drop.is-over{border-color:var(--blue);background:#E9F1FF;transform:scale(1.005)}
+
+  .veil{
+    position:fixed;inset:14px;z-index:60;pointer-events:none;
+    border:2px dashed var(--blue);border-radius:24px;
+    background:rgba(37,99,235,.06);backdrop-filter:blur(1px);
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;transition:opacity .18s ease;
+  }
+  .veil.is-on{opacity:1}
+  .veil span{
+    font-family:var(--mono);font-size:13px;font-weight:600;color:var(--blue-deep);
+    background:#fff;border-radius:var(--pill);padding:10px 20px;box-shadow:var(--sh-blue);
+  }
+
+  /* ---------- file table ---------- */
+  .files-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:26px 0 14px;font-family:var(--mono);font-size:12px;font-weight:400;color:var(--mute-2)}
+  .c-name{width:auto}
+  .c-rows{width:132px;text-align:right}
+  .c-size{width:112px;text-align:right}
+  th.c-rows,th.c-size{padding-right:16px}
+  td.c-rows,td.c-size{padding-right:16px}
+  .cell-num{font-family:var(--mono);font-size:14px;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .file-name{display:flex;align-items:center;gap:9px;min-width:0;cursor:pointer;border-radius:var(--r-sm)}
+  .caret{width:12px;flex:none;color:#B9C1CF;font-size:9px;transition:transform .22s cubic-bezier(.34,1.3,.5,1),color .2s ease}
+  tr[aria-expanded="true"] .caret{transform:rotate(90deg);color:var(--blue)}
+  .ext{
+    font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--blue-deep);background:var(--blue-soft);border-radius:5px;padding:2px 6px;flex:none;
+  }
+  .ext[data-ext="json"]{color:#B45309;background:#FFF7ED}
+  .ext[data-ext="xlsx"],.ext[data-ext="xls"]{color:#15803D;background:#F0FDF4}
+  .fname{font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .prev-row td{height:auto;padding:0;background:#FAFBFE;border-bottom:1px solid var(--rule)}
+  .prev-wrap{padding:16px 18px 18px;overflow-x:auto}
+  .prev-wrap table{table-layout:auto;width:auto;border-spacing:0}
+  .prev-wrap th{
+    font-family:var(--mono);font-size:11px;font-weight:500;color:var(--mute);
+    padding:0 16px 8px 0;border-bottom:1px solid var(--rule);white-space:nowrap;
+  }
+  .prev-wrap td{
+    font-family:var(--mono);font-size:12px;font-weight:400;color:var(--ink-soft);
+    padding:7px 16px 7px 0;border-bottom:1px solid var(--rule-soft);height:auto;
+    white-space:nowrap;max-width:320px;overflow:hidden;text-overflow:ellipsis;
+  }
+  .prev-wrap tr:last-child td{border-bottom:0}
+  .prev-note{font-family:var(--sans);font-size:12px;font-weight:400;color:var(--mute-2);margin:12px 0 0}
+  .act{display:flex;align-items:center;justify-content:flex-end;gap:2px;opacity:0;transition:opacity .16s ease}
+  tbody tr:hover .act,.act:focus-within{opacity:1}
+  .act button{
+    border:0;background:transparent;color:var(--mute);cursor:pointer;
+    font-family:var(--mono);font-size:13px;line-height:1;padding:7px 8px;border-radius:var(--r-sm);
+    transition:color .16s ease,background .16s ease;
+  }
+  .act button:hover{color:var(--blue);background:var(--blue-soft)}
+  .act button[data-kill]:hover{color:var(--alert);background:var(--alert-soft)}
+
+  /* ---------- storage ---------- */
+  .store-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:22px;align-items:start}
+  .donut-wrap{display:flex;align-items:center;gap:34px;flex-wrap:wrap}
+  .donut{width:230px;height:230px;flex:none;margin:0}
+  .donut svg{display:block;width:230px;height:230px}
+  .legend{flex:1;min-width:200px;display:flex;flex-direction:column}
+  .lg{display:flex;align-items:center;gap:10px;height:36px;font-size:13.5px;border-bottom:1px solid var(--rule-soft)}
+  .lg:last-child{border-bottom:0}
+  .lg i{width:9px;height:9px;border-radius:3px;flex:none}
+  .lg .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;color:var(--ink-soft)}
+  .lg .v{font-family:var(--mono);font-size:12.5px;color:var(--mute);flex:none}
+
+  /* ---------- about ---------- */
+  .about-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:44px;align-items:start}
+  .about-main .about-lead{font-size:21px;font-weight:700;line-height:1.55;letter-spacing:-.01em;margin:0 0 18px;color:var(--ink)}
+  .about-main p{font-size:14.5px;font-weight:400;line-height:1.9;color:var(--mute);margin:0 0 16px}
+  .about-main h2{
+    font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.02em;
+    text-transform:uppercase;color:var(--mute-2);margin:32px 0 10px;
+  }
+  .about-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
+  .about-list li{padding:13px 0;border-bottom:1px solid var(--rule-soft);font-size:14px;font-weight:400;line-height:1.75;color:var(--mute)}
+  .about-list b{color:var(--ink);font-weight:600;margin-right:7px}
+  .about-side{display:flex;flex-direction:column;gap:18px}
+  .about-mail{margin:0 0 10px}
+  .about-mail a{
+    font-family:var(--mono);font-size:14.5px;font-weight:600;color:var(--blue);
+    word-break:break-all;border-bottom:1px solid var(--blue-line);padding-bottom:2px;
+    transition:color .2s ease,border-color .2s ease;
+  }
+  .about-mail a:hover{color:var(--blue-deep);border-color:var(--blue)}
+
+  /* ---------- chart bars ---------- */
+  .chart rect.bar{transform-box:fill-box;transform-origin:bottom;animation:barIn .52s cubic-bezier(.22,.61,.36,1) both}
+  @keyframes barIn{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+
   /* ---------- responsive ---------- */
   @media (max-width:1120px){
     :root{--pad:28px;--rail:300px;--gap:32px}
-    .wrap{grid-template-columns:minmax(0,1fr);gap:34px}
+    .pane.is-on{grid-template-columns:minmax(0,1fr);gap:34px}
     .rail{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
     .note{grid-column:1 / -1}
   }
@@ -425,6 +540,35 @@
     .foot .claim{display:none}
     .card{padding:18px;border-radius:var(--r-lg)}
   }
+  @media (max-width:1120px){
+    .store-grid{grid-template-columns:minmax(0,1fr)}
+    .about-grid{grid-template-columns:minmax(0,1fr);gap:34px}
+    .about-side{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  }
+  @media (max-width:760px){
+    .bar-in{flex-wrap:wrap;height:auto;padding:10px var(--pad) 8px;row-gap:6px}
+    .nav{display:flex;order:3;width:100%;gap:2px;overflow-x:auto;scrollbar-width:none}
+    .nav::-webkit-scrollbar{display:none}
+    .nav a{flex:none;padding:7px 12px;font-size:13.5px}
+    .c-time{width:74px}
+    .c-time span{font-size:11px}
+    .c-rows{width:70px}
+    .c-size{width:70px}
+    .c-act{width:26px}
+    .cell-num{font-size:12px}
+    .ext{display:none}
+    .caret{width:10px}
+    .donut,.donut svg{width:184px;height:184px}
+    .donut-wrap{gap:22px;justify-content:center}
+    .about-main .about-lead{font-size:18px}
+    .about-side{grid-template-columns:1fr}
+    .drop{padding:22px 16px;border-radius:var(--r-md)}
+    .drop b{font-size:14px}
+    .drop span{font-size:12px}
+    .prev-wrap{padding:12px 14px 14px}
+    .page-head h1{font-size:25px}
+    .act{opacity:1}
+  }
   @media (prefers-reduced-motion:reduce){
     *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
   }
@@ -434,30 +578,32 @@
 
 <header class="bar">
   <div class="bar-in">
-    <a class="mark" href="#top" aria-label="hellocl 首页">hello<b>cl</b></a>
+    <a class="mark" href="#overview" aria-label="hellocl 首页">hello<b>cl</b></a>
     <nav class="nav" aria-label="主导航">
-      <a href="#overview" aria-current="page">概览</a>
-      <a href="#records">数据表</a>
-      <a href="#storage">存储</a>
-      <a href="#about">关于</a>
+      <a href="#overview" data-nav="overview" aria-current="page">概览</a>
+      <a href="#data" data-nav="data">数据表</a>
+      <a href="#storage" data-nav="storage">存储</a>
+      <a href="#about" data-nav="about">关于</a>
     </nav>
     <div class="bar-right">
       <span class="stamp" id="stamp">2026.11.06 · FRI</span>
       <span class="sync" id="sync" data-state="ok"><i aria-hidden="true"></i><span id="syncText">已保存</span></span>
-      <button class="btn btn-solid" type="button" id="openAdd">记一条</button>
+      <button class="btn btn-solid" type="button" id="uploadBtn">上传数据</button>
     </div>
   </div>
 </header>
 
 <main class="wrap" id="top">
 
-  <div class="col-main">
-    <section id="overview" aria-labelledby="heroLabel">
+  <!-- ============ 概览 ============ -->
+  <section class="pane is-on" id="pane-overview" aria-label="概览">
+
+    <div class="col-main">
       <div class="hero-top">
         <div class="eyebrow">
-          <span id="heroLabel">读数合计 TOTAL</span>
+          <span>读数合计 TOTAL</span>
           <i aria-hidden="true"></i>
-          <span class="sub" id="heroRange">近 30 天 · 全部数据集</span>
+          <span class="sub" id="heroRange">全部上传文件</span>
         </div>
         <div class="seg" id="seg" data-range="30" role="tablist" aria-label="时间范围">
           <span class="seg-pill" aria-hidden="true"></span>
@@ -469,325 +615,344 @@
       <div class="figure-row">
         <p class="figure" id="total">0</p>
         <div class="delta">
-          <b id="deltaVal">+0.0%</b>
-          <span id="deltaLabel">较前 30 天</span>
+          <b id="deltaVal">+0</b>
+          <span id="deltaLabel">近 30 天新增</span>
         </div>
       </div>
 
-      <figure class="chart" id="chart" aria-label="每日读数趋势图" role="img"></figure>
+      <figure class="chart" id="chart" aria-label="每日上传数据量趋势" role="img"></figure>
       <ol class="axis" id="axis" aria-hidden="true"></ol>
-    </section>
 
-    <section class="metrics" aria-label="关键指标">
-      <div class="metric">
-        <h3>今日录入</h3>
-        <p id="mToday">0<em>条</em></p>
-      </div>
-      <div class="vr" aria-hidden="true"></div>
-      <div class="metric">
-        <h3>活跃数据集</h3>
-        <p id="mSets">0<em>个</em></p>
-      </div>
-      <div class="vr" aria-hidden="true"></div>
-      <div class="metric">
-        <h3>存储占用</h3>
-        <p id="mBytes">0<em>KB</em></p>
-      </div>
-    </section>
+      <section class="metrics" aria-label="关键指标">
+        <div class="metric">
+          <h3>上传文件</h3>
+          <p id="mFiles">0<em>个</em></p>
+        </div>
+        <div class="vr" aria-hidden="true"></div>
+        <div class="metric">
+          <h3>今日上传</h3>
+          <p id="mToday">0<em>条</em></p>
+        </div>
+        <div class="vr" aria-hidden="true"></div>
+        <div class="metric">
+          <h3>存储占用</h3>
+          <p id="mSize">0<em>KB</em></p>
+        </div>
+      </section>
 
-    <section class="records" id="records" aria-labelledby="recTitle">
-      <div class="section-head">
-        <h2 id="recTitle">最近记录</h2>
-        <div class="tools">
-          <span>近 7 天</span>
-          <label class="sr" for="filterDs">按数据集筛选</label>
-          <select id="filterDs" class="filter">
-            <option value="">全部数据集</option>
-          </select>
+      <section class="records" aria-labelledby="recTitle">
+        <div class="section-head">
+          <h2 id="recTitle">最近记录</h2>
+          <div class="tools">
+            <span>按上传时间倒序</span>
+          </div>
+        </div>
+
+        <table>
+          <caption>最近上传的文件</caption>
+          <thead>
+            <tr>
+              <th class="c-time" scope="col">上传时间</th>
+              <th class="c-name" scope="col">文件名</th>
+              <th class="c-rows" scope="col">数据量</th>
+              <th class="c-size" scope="col">大小</th>
+              <th class="c-act" scope="col"><span class="sr">操作</span></th>
+            </tr>
+          </thead>
+          <tbody id="recentRows"></tbody>
+        </table>
+
+        <div class="table-foot">
+          <span id="recentFoot">共 0 个文件</span>
+          <button class="foot-toggle" type="button" id="recentToggle" aria-expanded="false" aria-controls="recentRows" hidden>展开</button>
+        </div>
+      </section>
+    </div>
+
+    <aside class="rail" aria-label="存储与文件">
+      <div class="card card-fn">
+        <div class="card-head">
+          <h2>存储用量</h2>
+          <span class="num" id="stPct">0%</span>
+        </div>
+
+        <div class="usage">
+          <span>本机已用</span>
+          <b id="usageText">0 KB</b>
+        </div>
+        <div class="track" role="progressbar" aria-label="存储用量" aria-valuemin="0" aria-valuemax="100" aria-valuenow="1" id="track">
+          <i id="trackFill" style="width:1%"></i>
+        </div>
+
+        <div class="kv">
+          <div><span>文件数量</span><b id="kvFiles">0 个</b></div>
+          <div><span>数据总量</span><b id="kvRows">0 条</b></div>
+          <div><span>存储位置</span><b>浏览器本地</b></div>
+        </div>
+
+        <button class="btn" type="button" id="toStorage">查看存储详情 →</button>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>已连接的数据集</h2>
+          <span class="num" id="dsCount">0</span>
+        </div>
+        <div id="dsList"></div>
+        <button class="mini-toggle" type="button" id="dsToggle" aria-expanded="false" aria-controls="dsList" hidden>展开全部</button>
+        <button class="btn" type="button" id="toData">打开数据表 →</button>
+      </div>
+
+      <p class="note">文件只存在这台设备的浏览器里，不上传任何服务器。换设备或清除浏览器数据都会丢失，重要文件请在「数据表」里下载留底。</p>
+    </aside>
+  </section>
+
+  <!-- ============ 数据表 ============ -->
+  <section class="pane solo" id="pane-data" aria-label="数据表">
+    <div class="page-head">
+      <h1>数据表</h1>
+      <p>上传的每个文件都以原始格式保存在本机浏览器中，字节不做任何改动。点开任意一行可以预览前 20 行，也可以随时把原文件下载回来。</p>
+    </div>
+
+    <div class="drop" id="drop" role="button" tabindex="0" aria-label="上传 CSV、Excel 或 JSON 文件">
+      <b>把文件拖到这里，或<em>点击选择</em></b>
+      <span>支持 CSV、Excel（.xlsx / .xls）、JSON，可以一次选多个</span>
+    </div>
+
+    <div class="files-bar">
+      <span id="filesMeta">共 0 个文件</span>
+    </div>
+
+    <table class="file-table">
+      <caption>已上传的文件</caption>
+      <thead>
+        <tr>
+          <th class="c-name" scope="col">文件名</th>
+          <th class="c-rows" scope="col">数据量</th>
+          <th class="c-size" scope="col">大小</th>
+          <th class="c-time" scope="col">上传时间</th>
+          <th class="c-act" scope="col"><span class="sr">操作</span></th>
+        </tr>
+      </thead>
+      <tbody id="filesBody"></tbody>
+    </table>
+  </section>
+
+  <!-- ============ 存储 ============ -->
+  <section class="pane solo" id="pane-storage" aria-label="存储">
+    <div class="page-head">
+      <h1>存储</h1>
+      <p>所有文件都写在这台设备的浏览器存储里，不上传服务器。看得到每一份文件的占用比例，也看得到浏览器给这个站点留了多少空间。</p>
+    </div>
+
+    <div class="store-grid">
+      <div class="card">
+        <div class="card-head">
+          <h2>容量构成</h2>
+          <span class="num" id="donutTotal">0 KB</span>
+        </div>
+        <div class="donut-wrap">
+          <figure class="donut" id="donut" role="img" aria-label="各文件占用比例"></figure>
+          <div class="legend" id="legend"></div>
         </div>
       </div>
 
-      <table>
-        <caption>最近录入的数据记录</caption>
-        <thead>
-          <tr>
-            <th class="c-time" scope="col">时间</th>
-            <th class="c-ds" scope="col">数据集</th>
-            <th class="c-metric" scope="col">指标</th>
-            <th class="c-note" scope="col">备注</th>
-            <th class="c-val" scope="col">数值</th>
-            <th class="c-status" scope="col">状态</th>
-            <th class="c-act" scope="col"><span class="sr">操作</span></th>
-          </tr>
-        </thead>
-        <tbody id="rows"></tbody>
-      </table>
-
-      <div class="table-foot">
-        <span id="footCount">共 0 条记录</span>
-        <button class="foot-toggle" type="button" id="rowToggle" aria-expanded="false" aria-controls="rows">展开 30 条</button>
-      </div>
-    </section>
-  </div>
-
-  <aside class="rail" id="storage" aria-label="数据保存">
-    <div class="card card-fn">
-      <div class="card-head">
-        <h2>数据保存</h2>
-        <button class="toggle" id="autoSave" type="button" aria-pressed="true" aria-label="自动保存"></button>
-      </div>
-
-      <div class="usage">
-        <span>存储用量</span>
-        <b id="usageText">0 KB / 1 GB</b>
-      </div>
-      <div class="track" role="progressbar" aria-label="存储用量" aria-valuemin="0" aria-valuemax="100" aria-valuenow="1" id="track">
-        <i id="trackFill" style="width:1%"></i>
-      </div>
-
-      <div class="kv">
-        <div><span>自动保存</span><b id="kvAuto">每 5 分钟</b></div>
-        <div><span>上次备份</span><b id="kvBackup">尚未备份</b></div>
-        <div><span>存储位置</span><b>浏览器本地</b></div>
-      </div>
-
-      <div class="card-actions">
-        <button class="btn" type="button" id="exportBtn">导出 CSV</button>
-        <button class="btn" type="button" id="exportJsonBtn">导出 JSON</button>
-        <button class="btn btn-solid btn-wide" type="button" id="backupBtn">立即备份</button>
+      <div class="card">
+        <div class="card-head">
+          <h2>浏览器配额</h2>
+        </div>
+        <div class="usage">
+          <span>已用 / 可用</span>
+          <b id="quotaText">—</b>
+        </div>
+        <div class="track" role="progressbar" aria-label="浏览器配额占用" aria-valuemin="0" aria-valuemax="100" aria-valuenow="1" id="quotaTrack">
+          <i id="quotaFill" style="width:1%"></i>
+        </div>
+        <div class="kv">
+          <div><span>文件数量</span><b id="stFiles">0 个</b></div>
+          <div><span>数据总量</span><b id="stRows">0 条</b></div>
+          <div><span>最大单文件</span><b id="stMax">—</b></div>
+        </div>
+        <button class="btn btn-danger" type="button" id="clearAll" style="align-self:stretch">清空全部文件</button>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-head">
-        <h2>已连接的数据集</h2>
-        <span class="num" id="dsCount">0</span>
-      </div>
-      <div id="dsList"></div>
-      <button class="mini-toggle" type="button" id="dsToggle" aria-expanded="false" aria-controls="dsList" hidden>展开全部</button>
-      <button class="btn" type="button" id="importBtn" style="align-self:stretch">导入 CSV / JSON</button>
-      <input type="file" id="importFile" accept=".csv,.json,text/csv,application/json" hidden>
+    <p class="note" style="margin-top:26px;max-width:70ch">
+      浏览器给每个站点分配的配额通常是磁盘剩余空间的一部分，实际可用值由浏览器决定，这里显示的是它上报的估算值。
+      清除浏览数据、使用无痕窗口、或换一台设备，都会让这些文件消失 —— 它们不跟着账号走，因为这里根本没有账号。
+    </p>
+  </section>
+
+  <!-- ============ 关于 ============ -->
+  <section class="pane solo" id="pane-about" aria-label="关于">
+    <div class="page-head">
+      <h1>关于</h1>
+      <p>一个只用来看自己数据的小台子。</p>
     </div>
 
-    <div class="card">
-      <div class="card-head">
-        <h2>外部数据源</h2>
-        <span class="num" id="srcState">未连接</span>
-      </div>
-      <div class="src">
-        <label class="sr" for="srcUrl">数据源地址</label>
-        <input id="srcUrl" type="url" placeholder="https://…/data.csv" autocomplete="off" spellcheck="false">
-      </div>
-      <div class="kv kv-2">
-        <div><span>最后同步</span><b id="srcLast">—</b></div>
-        <div><span>本次新增</span><b id="srcCount">—</b></div>
-      </div>
-      <div class="card-actions">
-        <button class="btn" type="button" id="srcSave">保存地址</button>
-        <button class="btn btn-solid" type="button" id="srcSync">立即同步</button>
-      </div>
-      <p class="hint-inline">CSV 或 JSON 都认，只追加、重复的自动跳过。地址需允许跨域读取（GitHub raw、jsDelivr 可以）。</p>
-    </div>
+    <div class="about-grid">
+      <div class="about-main">
+        <p class="about-lead">本网站个人设计，仅供学习使用！</p>
+        <p>
+          把 CSV、Excel 或 JSON 文件拖进来，它会原样保存在你自己的浏览器里，并统计每个文件有多少条数据、占多少空间。
+          没有账号，没有服务器，也没有人在后台看你的数据 —— 因为这个站点压根没有后台。
+        </p>
 
-    <p class="note">数据只存在这台设备的浏览器里，不上传服务器。随时导出 CSV 或 JSON，换设备时导入即可。<br><button class="btn btn-ghost btn-danger" type="button" id="clearBtn" style="font-size:13px;margin-top:4px">清空全部记录</button></p>
-  </aside>
+        <h2>能做什么</h2>
+        <ul class="about-list">
+          <li><b>上传</b>支持 .csv / .xlsx / .xls / .json，可多选、可拖拽，文件按原始字节保存，不做格式转换。</li>
+          <li><b>统计</b>自动识别每个文件的数据条数，表头不计入，再汇总成页面顶部的读数合计。</li>
+          <li><b>预览</b>在「数据表」里点开任意文件，看前 20 行内容，确认传对了没有。</li>
+          <li><b>取回</b>随时把上传的原文件下载回本地，和原文件逐字节一致。</li>
+        </ul>
+
+        <h2>一些说明</h2>
+        <ul class="about-list">
+          <li>数据只存在这台设备的浏览器里，换设备、换浏览器都看不到。</li>
+          <li>清除浏览器数据（或使用无痕窗口）会连同文件一起删除，无法找回。</li>
+          <li>建议把重要文件在「数据表」里下载一份，别只留在这里。</li>
+          <li>Excel 支持 .xlsx 全量解析；旧版 .xls 能保存原文件，但无法统计行数，会显示为「—」。</li>
+        </ul>
+      </div>
+
+      <div class="about-side">
+        <div class="card">
+          <div class="card-head">
+            <h2>版本</h2>
+            <span class="num">v2.0</span>
+          </div>
+          <div class="kv">
+            <div><span>更新</span><b>2026.11</b></div>
+            <div><span>形态</span><b>单页 · 无后端</b></div>
+            <div><span>存储</span><b>IndexedDB</b></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>意见反馈</h2>
+          </div>
+          <p class="about-mail"><a href="mailto:clhello2021@gmail.com">clhello2021@gmail.com</a></p>
+          <p class="note">发现问题、有想法、或者只是想说说，写邮件给我就行。</p>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>当前数据</h2>
+            <span class="num">本机</span>
+          </div>
+          <div class="kv">
+            <div><span>文件</span><b id="aboutFiles">0 个</b></div>
+            <div><span>条数</span><b id="aboutRows">0 条</b></div>
+            <div><span>占用</span><b id="aboutSize">0 KB</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 
-<footer class="foot" id="about">
+<footer class="foot">
   <span>hellocl.dpdns.org</span>
   <span class="claim">本地优先 · 不追踪</span>
-  <span>v1.2 · 2026</span>
+  <span>v2.0 · 2026</span>
 </footer>
 
-<dialog id="addDialog" aria-labelledby="addTitle">
-  <form id="addForm">
-    <h2 id="addTitle">记一条</h2>
-    <div class="field">
-      <label for="fDataset">数据集</label>
-      <select id="fDataset">
-        <option>站点流量</option>
-        <option>服务器</option>
-        <option>订阅</option>
-        <option>存储</option>
-        <option>内容</option>
-        <option>其他</option>
-      </select>
-    </div>
-    <div class="field">
-      <label for="fMetric">指标</label>
-      <input id="fMetric" required placeholder="访问量 UV" autocomplete="off">
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label for="fValue">数值</label>
-        <input id="fValue" type="number" step="any" required placeholder="0" inputmode="decimal">
-      </div>
-      <div class="field">
-        <label for="fUnit">单位</label>
-        <input id="fUnit" placeholder="次" autocomplete="off">
-      </div>
-    </div>
-    <div class="field">
-      <label for="fNote">备注 <span style="color:#C2C8D4">选填</span></label>
-      <input id="fNote" placeholder="今天做了什么改动" maxlength="60" autocomplete="off">
-    </div>
-    <div class="field">
-      <label for="fStatus">状态</label>
-      <select id="fStatus">
-        <option value="ok">正常</option>
-        <option value="check">待核</option>
-      </select>
-    </div>
-    <p class="hint">数值会累加进所选区间的读数合计，并计入今天的读数。</p>
-    <menu>
-      <button class="btn" type="button" id="cancelAdd">取消</button>
-      <button class="btn btn-solid" type="submit">保存</button>
-    </menu>
-  </form>
-</dialog>
-
-<dialog id="csvDialog" aria-labelledby="csvTitle">
-  <h2 id="csvTitle">导入数据</h2>
-  <p class="csv-sum" id="csvSummary"></p>
-  <div class="csv-preview" id="csvPreview"></div>
-  <p class="hint">追加会跳过已存在的重复记录；覆盖会先清空现有记录，再按导入数据的日期重建趋势。</p>
-  <menu>
-    <button class="btn" type="button" id="csvCancel">取消</button>
-    <button class="btn" type="button" id="csvAppend">追加</button>
-    <button class="btn btn-solid" type="button" id="csvReplace">覆盖</button>
-  </menu>
-</dialog>
-
+<div class="veil" id="veil" aria-hidden="true"><span>松手上传 · CSV / Excel / JSON</span></div>
 <div class="sr" id="live" role="status" aria-live="polite"></div>
+<input type="file" id="fileInput" accept=".csv,.json,.xlsx,.xls,text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" multiple hidden>
+
 
 <script>
 (function(){
   "use strict";
 
-  var KEY = "hellocl.data.v1";
-  var DAYS = 60;
+  var DB_NAME = "hellocl.files.v1";
+  var STORE = "files";
   var DAY = 86400000;
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  function seedSeries(){
-    var out = [], pat = [20,-30,10,-15,35,-20,5,-35,25,-5];
-    for(var i=0;i<DAYS;i++){
-      out.push(Math.max(40, Math.round(560 + 2.7 * i + pat[i % 10])));
-    }
-    return out;
-  }
+  var ACCEPT = ["csv", "json", "xlsx", "xls"];
+  var MIME = {
+    csv: "text/csv",
+    json: "application/json",
+    xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    xls: "application/vnd.ms-excel"
+  };
+  var PAL = ["#2563EB", "#60A5FA", "#93C5FD", "#1D4ED8", "#0EA5E9", "#C7D7F5", "#94A3B8"];
 
-  var seedRecords = [
-    {id:"r5", ts: Date.now()-40*60000,  dataset:"站点流量", metric:"访问量 UV", value:8420, unit:"",   status:"ok",    note:"首页改版后首日"},
-    {id:"r4", ts: Date.now()-3*3600000, dataset:"服务器",   metric:"响应时间", value:128,  unit:"ms", status:"ok",    note:""},
-    {id:"r3", ts: Date.now()-5*3600000, dataset:"订阅",     metric:"新增订阅", value:36,   unit:"",   status:"ok",    note:"来自搜索引擎"},
-    {id:"r2", ts: Date.now()-7*3600000, dataset:"存储",     metric:"占用容量", value:0.38, unit:"GB", status:"ok",    note:""},
-    {id:"r1", ts: Date.now()-18*3600000,dataset:"内容",     metric:"发布篇数", value:4,    unit:"",   status:"check", note:"两篇待补配图"}
-  ];
-
+  var files = [];
   var range = 30;
-  var filter = "";
-  var displayed = 0;
-  var DS_SHUT = 4;
+  var expandedRecent = false;
+  var expandedFiles = {};
   var dsExpanded = false;
-  var state = load();
+  var SHUT_ROWS = 5;
+  var OPEN_ROWS = 20;
+  var DS_SHUT = 4;
+  var displayed = 0;
+  var quota = null;
 
-  function load(){
-    var d = null;
-    try{
-      var raw = localStorage.getItem(KEY);
-      if(raw){ d = JSON.parse(raw); }
-    }catch(e){ d = null; }
-
-    if(!d || !Array.isArray(d.records)){
-      d = { series: seedSeries(), records: seedRecords.slice(), backupAt: null, autoSave: true };
-    }
-
-    if(!Array.isArray(d.series) || !d.series.length){ d.series = seedSeries(); }
-    if(d.series.length < DAYS){
-      d.series = seedSeries().slice(0, DAYS - d.series.length).concat(d.series);
-    }
-    if(d.series.length > DAYS){ d.series = d.series.slice(-DAYS); }
-    d.series = d.series.map(function(v){ return Number(v) || 0; });
-
-    d.records = d.records.map(function(r){
-      return {
-        id: r.id || ("r" + Math.random().toString(36).slice(2,8)),
-        ts: r.ts || Date.now(),
-        dataset: r.dataset || "其他",
-        metric: r.metric || "未命名指标",
-        value: Number(r.value) || 0,
-        unit: r.unit || "",
-        status: r.status === "check" ? "check" : "ok",
-        note: typeof r.note === "string" ? r.note : ""
-      };
-    });
-
-    if(typeof d.autoSave !== "boolean") d.autoSave = true;
-    if(!d.src || typeof d.src !== "object" || !d.src.url) d.src = null;
-    return d;
-  }
-
-  function save(){
-    sync("saving");
-    try{
-      localStorage.setItem(KEY, JSON.stringify(state));
-      var t = new Date();
-      sync("ok", "已保存 " + pad(t.getHours()) + ":" + pad(t.getMinutes()));
-    }catch(e){
-      sync("error", "未能保存");
-    }
-  }
-
-  function sync(stateName, text){
-    var el = document.getElementById("sync");
-    el.dataset.state = stateName;
-    document.getElementById("syncText").textContent = text || (stateName === "saving" ? "保存中" : "已保存");
-  }
+  /* ================= 基础工具 ================= */
 
   function pad(n){ return n < 10 ? "0" + n : "" + n; }
   function nf(n){ return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
-  function fmtValue(v){
-    return (Number.isInteger(v) ? String(v) : v.toFixed(2)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  function esc(s){
+    return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];
+    });
   }
-  function sum(a){ return a.reduce(function(x, y){ return x + y; }, 0); }
-
+  function kb(b){
+    if(!b) return "0 B";
+    if(b < 1024) return b + " B";
+    if(b < 1048576) return (b / 1024).toFixed(1) + " KB";
+    if(b < 1073741824) return (b / 1048576).toFixed(2) + " MB";
+    return (b / 1073741824).toFixed(2) + " GB";
+  }
   function fmtTime(ts){
     var d = new Date(ts), now = new Date();
     var sameDay = d.toDateString() === now.toDateString();
     var day = (d.getMonth() + 1) + "/" + pad(d.getDate());
-    return (sameDay ? "" : day + " · ") + pad(d.getHours()) + ":" + pad(d.getMinutes());
+    return (sameDay ? "今天 " : day + " ") + pad(d.getHours()) + ":" + pad(d.getMinutes());
   }
   function fmtDate(ts){
     var d = new Date(ts);
     return (d.getMonth() + 1) + "/" + pad(d.getDate());
   }
-  function esc(s){
-    return String(s).replace(/[&<>"]/g, function(c){
-      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];
-    });
+  function sync(st, text){
+    var el = document.getElementById("sync");
+    if(!el) return;
+    el.dataset.state = st;
+    document.getElementById("syncText").textContent = text || (st === "saving" ? "处理中" : "就绪");
+  }
+  function live(t){
+    var el = document.getElementById("live");
+    if(el) el.textContent = t;
+  }
+  function extOf(name){
+    var m = /\.([a-z0-9]+)$/i.exec(String(name || ""));
+    return m ? m[1].toLowerCase() : "";
+  }
+  function mimeOf(ext, given){
+    if(given && given !== "application/octet-stream") return given;
+    return MIME[ext] || "application/octet-stream";
+  }
+  function flash(btn, text){
+    if(!btn) return;
+    var old = btn.getAttribute("data-label") || btn.textContent;
+    btn.setAttribute("data-label", old);
+    btn.textContent = text;
+    btn.classList.add("btn-done");
+    window.setTimeout(function(){
+      btn.textContent = btn.getAttribute("data-label") || old;
+      btn.classList.remove("btn-done");
+    }, 1700);
   }
 
-  /* ---------- download helpers ---------- */
-  function stamp(ts){
-    var d = new Date(ts);
-    if(isNaN(d.getTime())) d = new Date();
-    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
-           " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
-  }
-  function fileDay(){
-    var d = new Date();
-    return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate());
-  }
-
-  // 触发浏览器下载。三个坑都在这里处理掉了：
-  // 1) 链接必须挂到文档里，否则 Safari / 部分 Firefox 不认 click
-  // 2) objectURL 不能在 click 后立刻 revoke，要等浏览器开始收流
-  // 3) 任何异常都返回 false，交给调用方提示，而不是静默失败
-  function download(name, text, mime){
+  // 触发下载：链接要挂到文档里、objectURL 要延迟回收、异常要能被感知
+  function download(name, data, mime){
     var url = null, a = null;
     try{
-      var blob = new Blob([text], {type: mime || "text/plain;charset=utf-8"});
+      var blob = (data instanceof Blob) ? data : new Blob([data], {type: mime || "text/plain;charset=utf-8"});
       url = URL.createObjectURL(blob);
       a = document.createElement("a");
       a.href = url;
@@ -810,452 +975,46 @@
     }
   }
 
-  function flash(btn, text){
-    if(!btn) return;
-    var old = btn.getAttribute("data-label") || btn.textContent;
-    btn.setAttribute("data-label", old);
-    btn.textContent = text;
-    btn.classList.add("btn-done");
-    window.setTimeout(function(){
-      btn.textContent = btn.getAttribute("data-label") || old;
-      btn.classList.remove("btn-done");
-    }, 1600);
-  }
+  /* ================= IndexedDB ================= */
 
-  /* ---------- window maths ---------- */
-  function windowSeries(){ return state.series.slice(-range); }
-  function prevWindow(){
-    var s = state.series, end = s.length - range;
-    return s.slice(Math.max(0, end - range), end);
-  }
-  function windowTotal(){ return sum(windowSeries()); }
-  function deltaPct(){
-    var cur = windowTotal(), prev = sum(prevWindow());
-    return prev ? ((cur - prev) / prev) * 100 : 0;
-  }
+  var _db = null;
 
-  /* ---------- chart ---------- */
-  function drawChart(animate){
-    var s = windowSeries();
-    var W = 1000, H = 220, top = 14, bottom = H - 8;
-    var min = Math.min.apply(null, s), max = Math.max.apply(null, s);
-    var span = (max - min) || 1;
-    var n = s.length;
-    var x = function(i){ return (i / (n - 1)) * W; };
-    var y = function(v){ return top + (1 - (v - min) / span) * (bottom - top); };
-
-    var pts = s.map(function(v, i){ return x(i).toFixed(1) + "," + y(v).toFixed(1); });
-    var line = "M" + pts.join("L");
-    var area = line + "L" + W + "," + H + "L0," + H + "Z";
-
-    var grid = "";
-    [0,1,2,3].forEach(function(i){
-      var gy = (top + (bottom - top) * (i / 3)).toFixed(1);
-      grid += '<path d="M0,' + gy + "H" + W + '" stroke="#E9EDF5" stroke-width="1" stroke-dasharray="2 6" vector-effect="non-scaling-stroke"/>';
+  function openDB(){
+    return new Promise(function(res, rej){
+      if(_db) return res(_db);
+      if(!window.indexedDB) return rej(new Error("浏览器不支持本地数据库"));
+      var req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = function(){
+        var db = req.result;
+        if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, {keyPath: "id"});
+      };
+      req.onsuccess = function(){ _db = req.result; res(_db); };
+      req.onerror = function(){ rej(req.error || new Error("无法打开本地数据库")); };
     });
-
-    var lx = x(n - 1), ly = y(s[n - 1]);
-
-    document.getElementById("chart").innerHTML =
-      '<svg viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
-        '<defs><linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">' +
-          '<stop offset="0%" stop-color="#2563EB" stop-opacity="0.20"/>' +
-          '<stop offset="100%" stop-color="#2563EB" stop-opacity="0.01"/>' +
-        "</linearGradient></defs>" +
-        grid +
-        '<path d="' + area + '" fill="url(#areaFill)"/>' +
-        '<path class="chart-line" d="' + line + '" stroke="#2563EB" stroke-width="2.5" fill="none" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' +
-        '<circle cx="' + (lx - 2) + '" cy="' + ly + '" r="10" fill="#2563EB" fill-opacity="0.10"/>' +
-        '<circle cx="' + (lx - 2) + '" cy="' + ly + '" r="4" fill="#2563EB"/>' +
-      "</svg>";
-
-    var p = document.querySelector(".chart-line");
-    if(animate && p && !reduceMotion) animatePath(p);
-
-    var ticks = 5, idxs = [];
-    for(var t = 0; t < ticks; t++){ idxs.push(Math.round((n - 1) * t / (ticks - 1))); }
-    var today = Date.now();
-    document.getElementById("axis").innerHTML = idxs.map(function(i){
-      return "<li>" + fmtDate(today - (n - 1 - i) * DAY) + "</li>";
-    }).join("");
   }
 
-  function animatePath(p){
-    var len = p.getTotalLength();
-    p.style.transition = "none";
-    p.style.strokeDasharray = len;
-    p.style.strokeDashoffset = len;
-    void p.getBoundingClientRect();
-    p.style.transition = "stroke-dashoffset .8s cubic-bezier(.22,.61,.36,1)";
-    p.style.strokeDashoffset = "0";
-  }
-
-  /* ---------- number ---------- */
-  function animateNumber(el, from, to){
-    if(reduceMotion){ el.textContent = nf(to); displayed = to; return; }
-    var start = performance.now(), dur = 520;
-    function step(now){
-      var k = Math.min(1, (now - start) / dur);
-      var e = 1 - Math.pow(1 - k, 3);
-      el.textContent = nf(from + (to - from) * e);
-      if(k < 1){ requestAnimationFrame(step); }
-      else { el.textContent = nf(to); displayed = to; }
-    }
-    requestAnimationFrame(step);
-  }
-
-  /* ---------- stats ---------- */
-  function drawHero(animate){
-    var to = windowTotal();
-    var el = document.getElementById("total");
-    if(animate && !reduceMotion){ animateNumber(el, displayed, to); }
-    else { el.textContent = nf(to); displayed = to; }
-
-    var pct = deltaPct();
-    var dEl = document.getElementById("deltaVal");
-    dEl.textContent = (pct >= 0 ? "+" : "") + pct.toFixed(1) + "%";
-    dEl.dataset.dir = pct >= 0 ? "up" : "down";
-
-    document.getElementById("deltaLabel").textContent = "较前 " + range + " 天";
-    document.getElementById("heroRange").textContent = "近 " + range + " 天 · 全部数据集";
-  }
-
-  function drawStats(){
-    var today = new Date().toDateString();
-    var todayCount = state.records.filter(function(r){
-      return new Date(r.ts).toDateString() === today;
-    }).length;
-    document.getElementById("mToday").innerHTML = todayCount + "<em>条</em>";
-
-    var sets = {};
-    state.records.forEach(function(r){ sets[r.dataset] = true; });
-    var keys = Object.keys(sets);
-    document.getElementById("mSets").innerHTML = keys.length + "<em>个</em>";
-
-    var bytes = new Blob([JSON.stringify(state)]).size;
-    var mb = bytes / 1048576;
-    document.getElementById("mBytes").innerHTML =
-      mb < 1 ? (bytes / 1024).toFixed(1) + "<em>KB</em>" : mb.toFixed(2) + "<em>MB</em>";
-
-    var pctUsed = Math.max(0.8, Math.min(100, (bytes / 1073741824) * 100));
-    document.getElementById("trackFill").style.width = pctUsed + "%";
-    document.getElementById("track").setAttribute("aria-valuenow", Math.round(pctUsed));
-    document.getElementById("usageText").textContent = kb(bytes) + " / 1 GB";
-
-    var bySet = {};
-    state.records.forEach(function(r){ bySet[r.dataset] = (bySet[r.dataset] || 0) + 1; });
-    var dsKeys = Object.keys(bySet);
-    document.getElementById("dsCount").textContent = dsKeys.length;
-
-    var dsShown = dsExpanded ? dsKeys : dsKeys.slice(0, DS_SHUT);
-    document.getElementById("dsList").innerHTML = dsShown.length
-      ? dsShown.map(function(k){
-          return '<div class="ds-row"><span>' + esc(k) + "</span><span>" + bySet[k] + "</span></div>";
-        }).join("")
-      : '<div class="ds-row"><span>还没有数据集</span><span>0</span></div>';
-
-    var dt = document.getElementById("dsToggle");
-    if(dsKeys.length <= DS_SHUT){
-      dt.hidden = true;
-    }else{
-      dt.hidden = false;
-      dt.textContent = dsExpanded ? "收起" : ("展开全部 " + dsKeys.length + " 个");
-      dt.setAttribute("aria-expanded", dsExpanded ? "true" : "false");
-    }
-
-    var sel = document.getElementById("filterDs");
-    sel.innerHTML = '<option value="">全部数据集</option>' + dsKeys.map(function(k){
-      return '<option value="' + esc(k) + '">' + esc(k) + "</option>";
-    }).join("");
-    if(dsKeys.indexOf(filter) >= 0){ sel.value = filter; } else { sel.value = ""; filter = ""; }
-  }
-
-  function kb(b){
-    if(b < 1024) return b + " B";
-    if(b < 1048576) return (b / 1024).toFixed(1) + " KB";
-    return (b / 1048576).toFixed(2) + " MB";
-  }
-
-  /* ---------- rows ---------- */
-  var SHUT_ROWS = 5;
-  var OPEN_ROWS = 30;
-  var expanded = false;
-
-  function drawRows(){
-    var body = document.getElementById("rows");
-    var recs = state.records.slice().sort(function(a, b){ return b.ts - a.ts; });
-    if(filter) recs = recs.filter(function(r){ return r.dataset === filter; });
-
-    var total = recs.length;
-    var limit = expanded ? OPEN_ROWS : SHUT_ROWS;
-    var shown = recs.slice(0, limit);
-
-    if(!total){
-      body.innerHTML = '<tr><td colspan="7"><div class="empty"><strong>' +
-        (filter ? "这个数据集还没有记录" : "还没有记录") + "</strong>" +
-        (filter ? "换个数据集看看，或记一条新的。" : "点右上角「记一条」，第一条数据就从这里开始。") +
-        "</div></td></tr>";
-    }else{
-      body.innerHTML = shown.map(function(r){
-        var unit = r.unit ? " " + esc(r.unit) : "";
-        var note = r.note ? esc(r.note) : "";
-        return '<tr data-id="' + r.id + '">' +
-          '<td class="c-time"><span>' + fmtTime(r.ts) + "</span></td>" +
-          '<td class="c-ds">' + esc(r.dataset) +
-            (note ? '<span class="ds-note">' + note + "</span>" : "") + "</td>" +
-          '<td class="c-metric">' + esc(r.metric) + "</td>" +
-          '<td class="c-note"><span class="' + (note ? "" : "none") + '">' + (note || "—") + "</span></td>" +
-          '<td class="c-val"><span>' + fmtValue(r.value) + unit + "</span></td>" +
-          '<td class="c-status"><span class="status" data-s="' + (r.status === "check" ? "check" : "ok") + '">' +
-            (r.status === "check" ? "待核" : "正常") + "</span></td>" +
-          '<td class="c-act"><button class="rowkill" type="button" aria-label="删除这条记录" data-kill="' + r.id + '">×</button></td>' +
-        "</tr>";
-      }).join("");
-    }
-
-    var hidden = total - shown.length;
-    document.getElementById("footCount").textContent =
-      "共 " + total + " 条记录" + (filter ? " · " + filter : "") +
-      (hidden > 0 ? " · 当前显示最近 " + shown.length + " 条" : "");
-
-    var tg = document.getElementById("rowToggle");
-    if(total <= SHUT_ROWS){
-      tg.hidden = true;
-    }else{
-      tg.hidden = false;
-      tg.textContent = expanded ? "收起" : ("展开 " + Math.min(OPEN_ROWS, total) + " 条");
-      tg.setAttribute("aria-expanded", expanded ? "true" : "false");
-    }
-  }
-
-  document.getElementById("rowToggle").addEventListener("click", function(){
-    expanded = !expanded;
-    var body = document.getElementById("rows");
-    if(reduceMotion){ drawRows(); return; }
-    body.style.transition = "opacity .14s ease";
-    body.style.opacity = "0";
-    window.setTimeout(function(){
-      drawRows();
-      body.style.opacity = "1";
-      document.getElementById("live").textContent = expanded ? "已展开最近 " + OPEN_ROWS + " 条" : "已收起记录";
-    }, 140);
-  });
-
-  document.getElementById("dsToggle").addEventListener("click", function(){
-    dsExpanded = !dsExpanded;
-    var list = document.getElementById("dsList");
-    if(reduceMotion){ drawStats(); return; }
-    list.style.transition = "opacity .14s ease";
-    list.style.opacity = "0";
-    window.setTimeout(function(){
-      drawStats();
-      list.style.opacity = "1";
-      document.getElementById("live").textContent = dsExpanded ? "已展开全部数据集" : "已收起数据集";
-    }, 140);
-  });
-
-  function render(animate){
-    drawChart(animate);
-    drawHero(animate);
-    drawStats();
-    drawRows();
-    document.getElementById("kvAuto").textContent = state.autoSave ? "每 5 分钟" : "已关闭";
-    document.getElementById("autoSave").setAttribute("aria-pressed", state.autoSave ? "true" : "false");
-    if(state.backupAt){
-      var d = new Date(state.backupAt);
-      document.getElementById("kvBackup").textContent =
-        (d.toDateString() === new Date().toDateString() ? "今天 " : fmtDate(state.backupAt) + " ") +
-        pad(d.getHours()) + ":" + pad(d.getMinutes());
-    }
-  }
-
-  /* ---------- range switch ---------- */
-  var seg = document.getElementById("seg");
-  var chartEl = document.getElementById("chart");
-
-  seg.addEventListener("click", function(e){
-    var btn = e.target.closest("button[data-range]");
-    if(!btn) return;
-    var next = parseInt(btn.getAttribute("data-range"), 10);
-    if(next === range) return;
-
-    seg.querySelectorAll("button[data-range]").forEach(function(b){
-      b.setAttribute("aria-selected", String(parseInt(b.getAttribute("data-range"), 10) === next));
+  function withStore(mode, fn){
+    return openDB().then(function(db){
+      return new Promise(function(res, rej){
+        var store = db.transaction(STORE, mode).objectStore(STORE);
+        var req = fn(store);
+        if(req && typeof req === "object" && "onsuccess" in req){
+          req.onsuccess = function(){ res(req.result); };
+          req.onerror = function(){ rej(req.error); };
+          req.onabort = function(){ rej(req.error || new Error("写入被中断")); };
+        }else{
+          res(req);
+        }
+      });
     });
-    seg.dataset.range = String(next);
-
-    range = next;
-    chartEl.classList.add("is-swapping");
-
-    window.setTimeout(function(){
-      drawChart(true);
-      drawHero(true);
-      chartEl.classList.remove("is-swapping");
-      document.getElementById("live").textContent = "已切换到近 " + range + " 天";
-    }, reduceMotion ? 0 : 150);
-  });
-
-  /* ---------- interactions ---------- */
-  document.getElementById("openAdd").addEventListener("click", function(){
-    var d = document.getElementById("addDialog");
-    if(typeof d.showModal === "function"){ d.showModal(); } else { d.setAttribute("open", ""); }
-    document.getElementById("fMetric").focus();
-  });
-
-  document.getElementById("cancelAdd").addEventListener("click", closeDialog);
-
-  function closeDialog(){
-    var d = document.getElementById("addDialog");
-    if(typeof d.close === "function"){ d.close(); } else { d.removeAttribute("open"); }
-    document.getElementById("addForm").reset();
   }
 
-  document.getElementById("addForm").addEventListener("submit", function(e){
-    e.preventDefault();
-    var value = parseFloat(document.getElementById("fValue").value);
-    if(!isFinite(value)) return;
+  function idbAll(){ return withStore("readonly", function(s){ return s.getAll(); }).then(function(l){ return l || []; }); }
+  function idbPut(rec){ return withStore("readwrite", function(s){ return s.put(rec); }); }
+  function idbDel(id){ return withStore("readwrite", function(s){ return s.delete(id); }); }
+  function idbClear(){ return withStore("readwrite", function(s){ return s.clear(); }); }
 
-    var rec = {
-      id: "r" + Date.now(),
-      ts: Date.now(),
-      dataset: document.getElementById("fDataset").value,
-      metric: document.getElementById("fMetric").value.trim() || "未命名指标",
-      value: value,
-      unit: document.getElementById("fUnit").value.trim(),
-      note: document.getElementById("fNote").value.trim(),
-      status: document.getElementById("fStatus").value
-    };
-
-    state.records.unshift(rec);
-    state.series[state.series.length - 1] += value;
-
-    save();
-    render(true);
-    closeDialog();
-    document.getElementById("live").textContent = "已保存：" + rec.dataset + " " + rec.metric;
-  });
-
-  document.getElementById("rows").addEventListener("click", function(e){
-    var btn = e.target.closest("[data-kill]");
-    if(!btn) return;
-    var id = btn.getAttribute("data-kill");
-    var row = btn.closest("tr");
-    if(row && !reduceMotion){
-      row.style.transition = "opacity .18s ease, transform .18s ease";
-      row.style.opacity = "0";
-      row.style.transform = "translateX(10px)";
-    }
-    window.setTimeout(function(){
-      state.records = state.records.filter(function(r){ return r.id !== id; });
-      save();
-      render(false);
-      document.getElementById("live").textContent = "已删除一条记录";
-    }, reduceMotion ? 0 : 180);
-  });
-
-  document.getElementById("autoSave").addEventListener("click", function(){
-    state.autoSave = !state.autoSave;
-    save();
-    render(false);
-  });
-
-  document.getElementById("filterDs").addEventListener("change", function(e){
-    filter = e.target.value;
-    drawRows();
-  });
-
-  document.getElementById("exportBtn").addEventListener("click", function(){
-    var btn = this;
-    var rows = state.records.slice().sort(function(a, b){ return a.ts - b.ts; });
-    var lines = ["时间,数据集,指标,备注,数值,单位,状态"];
-    rows.forEach(function(r){
-      lines.push([stamp(r.ts), r.dataset, r.metric, r.note || "", r.value, r.unit,
-                  r.status === "check" ? "待核" : "正常"]
-        .map(function(v){ return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"'; }).join(","));
-    });
-    var ok = download("hellocl-" + fileDay() + ".csv", "\ufeff" + lines.join("\r\n"),
-                      "text/csv;charset=utf-8");
-    if(ok){
-      sync("ok", "已导出 " + rows.length + " 条为 CSV");
-      flash(btn, "已下载 " + rows.length + " 条");
-    }else{
-      sync("error", "导出失败，请换浏览器再试");
-      flash(btn, "导出失败");
-    }
-  });
-
-  document.getElementById("exportJsonBtn").addEventListener("click", function(){
-    var btn = this;
-    var payload = {
-      app: "hellocl",
-      version: 1,
-      exportedAt: new Date().toISOString(),
-      records: state.records,
-      series: state.series
-    };
-    var ok = download("hellocl-" + fileDay() + ".json", JSON.stringify(payload, null, 2),
-                      "application/json;charset=utf-8");
-    if(ok){
-      sync("ok", "已导出 " + state.records.length + " 条为 JSON");
-      flash(btn, "已下载");
-    }else{
-      sync("error", "导出失败，请换浏览器再试");
-      flash(btn, "导出失败");
-    }
-  });
-
-  document.getElementById("backupBtn").addEventListener("click", function(){
-    var btn = this;
-    state.backupAt = Date.now();
-    save();
-    var snapshot = { app: "hellocl", version: 1, at: state.backupAt,
-                     series: state.series, records: state.records };
-    try{
-      localStorage.setItem(KEY + ".backup", JSON.stringify(snapshot));
-    }catch(e){
-      sync("error", "本地快照写入失败");
-    }
-    // 同时落一份文件到磁盘：本地快照会随浏览器数据一起丢，文件不会
-    var ok = download("hellocl-backup-" + fileDay() + ".json",
-                      JSON.stringify(snapshot, null, 2), "application/json;charset=utf-8");
-    render(false);
-    if(ok){
-      sync("ok", "已备份并下载到本地");
-      flash(btn, "已备份 + 已下载");
-    }else{
-      sync("ok", "已备份到浏览器（下载被拦截）");
-      flash(btn, "已备份（未下载）");
-    }
-  });
-
-  /* ---------- import: CSV / JSON ---------- */
-  var pending = null;
-
-  function nextId(){ return "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
-
-  function parseNum(v){
-    if(v == null) return null;
-    var s = String(v).replace(/[,\s]/g, "").replace(/[^\d.\-+eE]/g, "");
-    if(s === "" || s === "-" || s === "." || s === "+") return null;
-    var n = parseFloat(s);
-    return isFinite(n) ? n : null;
-  }
-
-  function parseTime(v){
-    if(v == null || v === "") return Date.now();
-    if(typeof v === "number") return v < 1e12 ? Math.round(v * 1000) : v;
-    var s = String(v).trim();
-    if(!s) return Date.now();
-    var hm = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
-    if(hm){ var d0 = new Date(); d0.setHours(+hm[1], +hm[2], +(hm[3] || 0), 0); return d0.getTime(); }
-    var n = Date.parse(s);
-    if(!isNaN(n)) return n;
-    n = Date.parse(s.replace(/\//g, "-").replace(" ", "T"));
-    if(!isNaN(n)) return n;
-    n = Date.parse(s.replace(/\./g, "-").replace(" ", "T"));
-    if(!isNaN(n)) return n;
-    return Date.now();
-  }
+  /* ================= 解析：CSV ================= */
 
   function parseCSV(text){
     var first = (text.split(/\r?\n/)[0] || "");
@@ -1276,7 +1035,7 @@
         if(ch === '"'){ q = true; }
         else if(ch === delim){ row.push(cur); cur = ""; }
         else if(ch === "\n"){ row.push(cur); rows.push(row); row = []; cur = ""; }
-        else if(ch === "\r"){ /* ignore */ }
+        else if(ch === "\r"){ /* 忽略 */ }
         else { cur += ch; }
       }
     }
@@ -1284,266 +1043,965 @@
     return rows.filter(function(r){ return r.length && r.join("").trim() !== ""; });
   }
 
-  var HEAD = {
-    ts:      ["时间","日期","time","date","ts","timestamp","datetime","created"],
-    dataset: ["数据集","dataset","set","来源","source","channel"],
-    metric:  ["指标","metric","name","项目","item","measure"],
-    note:    ["备注","note","memo","remark","comment","desc"],
-    value:   ["数值","value","val","count","数量","值","amount"],
-    unit:    ["单位","unit"],
-    status:  ["状态","status"]
-  };
+  function isNumericCell(v){
+    var s = String(v == null ? "" : v).replace(/[,\s]/g, "");
+    if(!s) return false;
+    return /^[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?$/.test(s);
+  }
 
-  function fromCSV(t){
-    var rows = parseCSV(t);
-    if(rows.length < 2) return null;
-    var header = rows[0].map(function(h){ return String(h).trim().toLowerCase(); });
-    var map = {}, body = rows.slice(1);
+  function hasHeader(rows){
+    if(!rows || rows.length < 2) return false;
+    var a = rows[0], b = rows[1];
+    if(!a || !a.length) return false;
+    var numA = 0, numB = 0, i;
+    for(i = 0; i < a.length; i++) if(isNumericCell(a[i])) numA++;
+    for(i = 0; i < b.length; i++) if(isNumericCell(b[i])) numB++;
+    if(numA === 0 && numB > 0) return true;
+    if(numA > 0) return false;
+    return a.every(function(c){ return String(c).trim() !== ""; });
+  }
 
-    Object.keys(HEAD).forEach(function(k){
-      for(var i = 0; i < header.length; i++){
-        if(HEAD[k].indexOf(header[i]) >= 0 && map[k] == null){ map[k] = i; break; }
+  function analyzeCSV(buf){
+    var text = new TextDecoder("utf-8").decode(buf);
+    if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    var rows = parseCSV(text);
+    var head = hasHeader(rows) ? rows[0].map(function(c){ return String(c).trim(); }) : null;
+    var data = head ? rows.slice(1) : rows;
+    return {
+      rows: data.length,
+      cols: (rows[0] || []).length,
+      headers: head,
+      preview: data.slice(0, OPEN_ROWS).map(function(r){ return r.map(function(c){ return String(c); }); }),
+      warn: ""
+    };
+  }
+
+  /* ================= 解析：JSON ================= */
+
+  function firstArrayList(obj){
+    var keys = ["records", "data", "rows", "items", "list", "result", "results", "values"];
+    for(var i = 0; i < keys.length; i++){
+      if(Array.isArray(obj[keys[i]])) return obj[keys[i]];
+    }
+    return null;
+  }
+  function cellText(v){
+    if(v === null || v === undefined) return "";
+    if(typeof v === "object"){
+      try{
+        var s = JSON.stringify(v);
+        return s.length > 90 ? s.slice(0, 88) + "…" : s;
+      }catch(e){ return ""; }
+    }
+    return String(v);
+  }
+
+  function analyzeJSON(buf){
+    var text = new TextDecoder("utf-8").decode(buf);
+    if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    var data;
+    try{
+      data = JSON.parse(text);
+    }catch(e){
+      // 兼容 NDJSON：每行一个 JSON
+      var lines = text.split(/\r?\n/);
+      var objs = [];
+      for(var i = 0; i < lines.length; i++){
+        var ln = lines[i].trim();
+        if(!ln) continue;
+        try{ objs.push(JSON.parse(ln)); }catch(e2){ /* 跳过坏行 */ }
       }
-    });
-
-    if(map.value == null){
-      if(header.length < 5) return null;
-      if(/数值|value|时间|time|数据集|dataset/.test(header.join(" "))){ return null; }
-      map = { ts:0, dataset:1, metric:2, note:3, value:4, unit:5, status:6 };
-      body = rows;
+      if(!objs.length) throw new Error("JSON 结构无法识别");
+      data = objs;
     }
 
-    var out = [];
-    body.forEach(function(cells){
-      var value = parseNum(cells[map.value]);
-      if(value === null) return;
-      out.push({
-        id: nextId(),
-        ts: parseTime(cells[map.ts]),
-        dataset: String(cells[map.dataset] || "其他").trim() || "其他",
-        metric: String(cells[map.metric] || "未命名指标").trim() || "未命名指标",
-        value: value,
-        unit: String(cells[map.unit] || "").trim(),
-        note: String(cells[map.note] || "").trim(),
-        status: String(cells[map.status] || "").indexOf("待") === 0 ? "check" : "ok"
+    var list = null;
+    if(Array.isArray(data)) list = data;
+    else if(data && typeof data === "object") list = firstArrayList(data);
+    if(!list) list = (data && typeof data === "object") ? [data] : [];
+
+    var keys = [];
+    for(var j = 0; j < Math.min(list.length, 5); j++){
+      var it = list[j];
+      if(it && typeof it === "object" && !Array.isArray(it)){
+        Object.keys(it).forEach(function(k){ if(keys.indexOf(k) < 0) keys.push(k); });
+      }
+    }
+    var isTable = keys.length > 0;
+    var used = keys.slice(0, 12);
+
+    return {
+      rows: list.length,
+      cols: isTable ? keys.length : 1,
+      headers: isTable ? used : null,
+      preview: list.slice(0, OPEN_ROWS).map(function(it){
+        if(!isTable) return [cellText(it)];
+        return used.map(function(k){
+          return cellText(it && typeof it === "object" ? it[k] : "");
+        });
+      }),
+      warn: ""
+    };
+  }
+
+  /* ================= 解析：XLSX（自带 ZIP 解包，不依赖外部库） ================= */
+
+  function unzipEntry(buf, matcher){
+    var view = new DataView(buf);
+    var len = buf.byteLength;
+    var eocd = -1;
+    var floor = Math.max(0, len - 22 - 65535);
+    for(var i = len - 22; i >= floor; i--){
+      if(view.getUint32(i, true) === 0x06054b50){ eocd = i; break; }
+    }
+    if(eocd < 0) return Promise.resolve(null);
+
+    var count = view.getUint16(eocd + 10, true);
+    var p = view.getUint32(eocd + 16, true);
+
+    for(var k = 0; k < count; k++){
+      if(p + 46 > len || view.getUint32(p, true) !== 0x02014b50) break;
+      var method = view.getUint16(p + 10, true);
+      var compSize = view.getUint32(p + 20, true);
+      var nameLen = view.getUint16(p + 28, true);
+      var extraLen = view.getUint16(p + 30, true);
+      var cmtLen = view.getUint16(p + 32, true);
+      var localOff = view.getUint32(p + 42, true);
+      var name = new TextDecoder("utf-8").decode(new Uint8Array(buf, p + 46, nameLen));
+
+      if(matcher(name)){
+        if(compSize === 0xFFFFFFFF) return Promise.resolve(null);
+        return inflateAt(buf, localOff, compSize, method);
+      }
+      p += 46 + nameLen + extraLen + cmtLen;
+    }
+    return Promise.resolve(null);
+  }
+
+  function inflateAt(buf, localOff, compSize, method){
+    try{
+      var view = new DataView(buf);
+      if(view.getUint32(localOff, true) !== 0x04034b50) return Promise.resolve(null);
+      var nameLen = view.getUint16(localOff + 26, true);
+      var extraLen = view.getUint16(localOff + 28, true);
+      var start = localOff + 30 + nameLen + extraLen;
+      var bytes = new Uint8Array(buf, start, compSize);
+
+      if(method === 0) return Promise.resolve(new TextDecoder("utf-8").decode(bytes));
+      if(method !== 8) return Promise.resolve(null);
+      if(typeof DecompressionStream !== "function") return Promise.resolve(null);
+
+      var stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+      return new Response(stream).arrayBuffer().then(function(out){
+        return new TextDecoder("utf-8").decode(out);
       });
+    }catch(e){
+      return Promise.resolve(null);
+    }
+  }
+
+  function unxml(s){
+    return String(s)
+      .replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+      .replace(/&#x([0-9a-fA-F]+);/g, function(_, h){ return String.fromCharCode(parseInt(h, 16)); })
+      .replace(/&#(\d+);/g, function(_, d){ return String.fromCharCode(+d); })
+      .replace(/&amp;/g, "&");
+  }
+
+  function textOf(xml){
+    var clean = String(xml).replace(/<rPh[\s\S]*?<\/rPh>/g, "");
+    var out = "", re = /<t[^>]*>([\s\S]*?)<\/t>/g, m;
+    while((m = re.exec(clean))) out += m[1];
+    return unxml(out);
+  }
+
+  function sharedStrings(xml){
+    var out = [], re = /<si>([\s\S]*?)<\/si>/g, m;
+    while((m = re.exec(xml))) out.push(textOf(m[1]));
+    return out;
+  }
+
+  function colIndex(letters){
+    var n = 0;
+    for(var i = 0; i < letters.length; i++) n = n * 26 + (letters.charCodeAt(i) - 64);
+    return n - 1;
+  }
+
+  function parseRowXml(xml, shared){
+    var cells = [], re = /<c([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g, m;
+    while((m = re.exec(xml))){
+      var attrs = m[1] || "", inner = m[2] || "";
+      var ref = /\br="([A-Z]+)\d+"/.exec(attrs);
+      var type = /\bt="([^"]+)"/.exec(attrs);
+      var idx = ref ? colIndex(ref[1]) : cells.length;
+      if(idx < 0 || idx > 200) continue;
+
+      var val = "", v;
+      if(type && type[1] === "s"){
+        v = /<v>([\s\S]*?)<\/v>/.exec(inner);
+        val = v ? (shared[parseInt(v[1], 10)] || "") : "";
+      }else if(type && type[1] === "inlineStr"){
+        val = textOf(inner);
+      }else{
+        v = /<v>([\s\S]*?)<\/v>/.exec(inner);
+        val = v ? unxml(v[1]) : "";
+      }
+      while(cells.length < idx) cells.push("");
+      cells[idx] = val;
+    }
+    return cells;
+  }
+
+  function analyzeXL(buf, ext){
+    if(ext === "xls"){
+      return Promise.resolve({
+        rows: null, cols: 0, headers: null, preview: [],
+        warn: "旧版 .xls 是二进制格式，暂不支持统计行数与预览。文件已按原格式保存，可以正常下载。"
+      });
+    }
+    return unzipEntry(buf, function(n){ return /^xl\/worksheets\/sheet1\.xml$/.test(n); })
+      .then(function(sheet){
+        if(sheet) return sheet;
+        return unzipEntry(buf, function(n){ return /^xl\/worksheets\/sheet\d+\.xml$/.test(n); });
+      })
+      .then(function(sheet){
+        if(!sheet) throw new Error("没有找到工作表");
+        return unzipEntry(buf, function(n){ return /^xl\/sharedStrings\.xml$/.test(n); })
+          .then(function(sharedXml){
+            var shared = sharedXml ? sharedStrings(sharedXml) : [];
+            var total = (sheet.match(/<row[\s>]/g) || []).length;
+            var rows = [], re = /<row[^>]*?(?:\/>|>([\s\S]*?)<\/row>)/g, m;
+            while((m = re.exec(sheet)) && rows.length < OPEN_ROWS + 2){
+              rows.push(parseRowXml(m[1] || "", shared));
+            }
+            var head = hasHeader(rows) ? rows[0] : null;
+            var data = head ? rows.slice(1) : rows;
+            return {
+              rows: Math.max(0, total - (head ? 1 : 0)),
+              cols: (rows[0] || []).length,
+              headers: head,
+              preview: data.slice(0, OPEN_ROWS),
+              warn: ""
+            };
+          });
+      })
+      .catch(function(e){
+        return {
+          rows: null, cols: 0, headers: null, preview: [],
+          warn: "这个表格没能解析出来（" + (e && e.message ? e.message : "结构异常") + "）。文件已按原格式保存。"
+        };
+      });
+  }
+
+  /* ================= 上传 ================= */
+
+  function readBuf(file){
+    if(file.arrayBuffer) return file.arrayBuffer();
+    return new Promise(function(res, rej){
+      var r = new FileReader();
+      r.onload = function(){ res(r.result); };
+      r.onerror = function(){ rej(r.error); };
+      r.readAsArrayBuffer(file);
     });
-    return out.length ? { records: out, series: null } : null;
   }
 
-  function normRecord(r){
-    if(!r || typeof r !== "object") return null;
-    var value = parseNum(r.value != null ? r.value : (r["数值"] != null ? r["数值"] : r.count));
-    if(value === null) return null;
-    var st = String(r.status || r["状态"] || "");
-    return {
-      id: r.id || nextId(),
-      ts: parseTime(r.ts || r.time || r.date || r["时间"]),
-      dataset: String(r.dataset || r.set || r.source || r["数据集"] || "其他").trim() || "其他",
-      metric: String(r.metric || r.name || r["指标"] || "未命名指标").trim() || "未命名指标",
-      value: value,
-      unit: String(r.unit || r["单位"] || "").trim(),
-      note: String(r.note || r.memo || r["备注"] || "").trim(),
-      status: (st.indexOf("待") === 0 || st === "check") ? "check" : "ok"
+  async function ingest(file){
+    var ext = extOf(file.name);
+    var buf = await readBuf(file);
+    var info;
+    try{
+      if(ext === "csv") info = analyzeCSV(buf);
+      else if(ext === "json") info = analyzeJSON(buf);
+      else info = await analyzeXL(buf, ext);
+    }catch(e){
+      info = {
+        rows: null, cols: 0, headers: null, preview: [],
+        warn: "内容解析失败（" + (e && e.message ? e.message : "未知原因") + "）。文件已按原格式保存。"
+      };
+    }
+
+    // 同名同体积视为重新上传，覆盖原记录，避免列表里堆重复项
+    var dup = null;
+    for(var i = 0; i < files.length; i++){
+      if(files[i].name === file.name && files[i].size === file.size){ dup = files[i]; break; }
+    }
+
+    var rec = {
+      id: dup ? dup.id : ("f" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)),
+      name: file.name,
+      ext: ext,
+      size: file.size,
+      mime: mimeOf(ext, file.type),
+      rows: (info.rows === undefined ? null : info.rows),
+      cols: info.cols || 0,
+      headers: info.headers || null,
+      preview: info.preview || [],
+      warn: info.warn || "",
+      uploadedAt: Date.now(),
+      blob: new Blob([buf], {type: mimeOf(ext, file.type)})
     };
+    await idbPut(rec);
+    return rec;
   }
 
-  function fromJSON(t){
-    var d;
-    try{ d = JSON.parse(t); }catch(e){ return null; }
-    var arr = Array.isArray(d) ? d : (d && Array.isArray(d.records) ? d.records : null);
-    if(!arr) return null;
-    var recs = arr.map(normRecord).filter(Boolean);
-    if(!recs.length) return null;
-    return {
-      records: recs,
-      series: (d && !Array.isArray(d) && Array.isArray(d.series) && d.series.length === DAYS) ? d.series : null
-    };
+  async function reload(){
+    var list = await idbAll();
+    list.sort(function(a, b){ return b.uploadedAt - a.uploadedAt; });
+    files = list;
   }
 
-  function parseAny(text){
-    var t = String(text || "").replace(/^\uFEFF/, "").trim();
-    if(!t) return null;
-    if(t.charAt(0) === "{" || t.charAt(0) === "[") return fromJSON(t);
-    return fromCSV(t);
+  async function handleFiles(list){
+    var arr = Array.prototype.slice.call(list || []);
+    if(!arr.length) return;
+
+    var good = 0, rows = 0, bad = [];
+    for(var i = 0; i < arr.length; i++){
+      var f = arr[i];
+      if(ACCEPT.indexOf(extOf(f.name)) < 0){ bad.push(f.name); continue; }
+      sync("saving", "解析中 " + (i + 1) + "/" + arr.length);
+      try{
+        var rec = await ingest(f);
+        good++;
+        rows += (rec.rows || 0);
+      }catch(e){
+        bad.push(f.name);
+      }
+    }
+
+    try{ await reload(); }catch(e){ /* 读取失败也要继续渲染 */ }
+    renderAll();
+
+    if(good){
+      sync("ok", "已保存 " + good + " 个文件");
+      flash(document.getElementById("uploadBtn"), "已上传");
+      live("已上传 " + good + " 个文件，新增 " + nf(rows) + " 条数据");
+    }else if(!bad.length){
+      sync("ok", "没有选择文件");
+    }
+    if(bad.length){
+      sync("error", "有 " + bad.length + " 个文件被跳过");
+      live("以下文件被跳过：" + bad.join("、") + "（仅支持 CSV / Excel / JSON）");
+    }
   }
 
-  function sameRec(a, b){
-    return Math.abs(a.ts - b.ts) < 60000 && a.dataset === b.dataset && a.metric === b.metric && a.value === b.value;
+  /* ================= 统计 ================= */
+
+  function totalRows(){ return files.reduce(function(s, f){ return s + (f.rows || 0); }, 0); }
+  function totalSize(){ return files.reduce(function(s, f){ return s + (f.size || 0); }, 0); }
+  function sumArr(a){ return a.reduce(function(x, y){ return x + y; }, 0); }
+
+  function rowsInRange(n){
+    var out = new Array(n).fill(0);
+    var base = new Date(); base.setHours(0, 0, 0, 0);
+    var t0 = base.getTime();
+    files.forEach(function(f){
+      var d = new Date(f.uploadedAt); d.setHours(0, 0, 0, 0);
+      var idx = n - 1 - Math.round((t0 - d.getTime()) / DAY);
+      if(idx >= 0 && idx < n) out[idx] += (f.rows || 0);
+    });
+    return out;
   }
 
-  function backfill(list){
+  /* ================= 概览 ================= */
+
+  function countUp(el, from, to){
+    if(reduceMotion){ el.textContent = nf(to); displayed = to; return; }
+    var start = performance.now(), dur = 520;
+    function step(now){
+      var k = Math.min(1, (now - start) / dur);
+      var e = 1 - Math.pow(1 - k, 3);
+      el.textContent = nf(from + (to - from) * e);
+      if(k < 1) requestAnimationFrame(step);
+      else { el.textContent = nf(to); displayed = to; }
+    }
+    requestAnimationFrame(step);
+  }
+
+  function drawHero(animate){
+    var to = totalRows();
+    var el = document.getElementById("total");
+    if(animate) countUp(el, displayed, to);
+    else { el.textContent = nf(to); displayed = to; }
+
+    document.getElementById("deltaVal").textContent = "+" + nf(sumArr(rowsInRange(range)));
+    document.getElementById("deltaLabel").textContent = "近 " + range + " 天新增";
+    document.getElementById("heroRange").textContent =
+      files.length ? "全部上传文件 · " + files.length + " 个" : "全部上传文件";
+  }
+
+  function drawChart(){
+    var host = document.getElementById("chart");
+    if(!host) return;
+    var w = host.clientWidth || 720;
+    if(w < 60) return;
+    var h = host.clientHeight || 220;
+    var data = rowsInRange(range);
+    var n = data.length;
+    var max = Math.max.apply(null, data.concat([1]));
+    var padTop = 22, padBottom = 6;
+    var plotH = h - padTop - padBottom;
+    var slot = w / n;
+    var barW = Math.max(3, Math.min(22, slot * 0.58));
+    var total = sumArr(data);
+
+    var grid = "";
+    [0, 1, 2, 3].forEach(function(i){
+      var gy = (padTop + plotH * (i / 3)).toFixed(1);
+      grid += '<path d="M0,' + gy + "H" + w + '" stroke="#EBEFF7" stroke-width="1" stroke-dasharray="2 6"/>';
+    });
+
     var today = new Date(); today.setHours(0, 0, 0, 0);
-    list.forEach(function(r){
-      var d = new Date(r.ts); d.setHours(0, 0, 0, 0);
-      var diff = Math.round((today - d) / DAY);
-      var idx = state.series.length - 1 - diff;
-      if(idx >= 0 && idx < state.series.length){ state.series[idx] += r.value; }
-    });
-  }
-
-  document.getElementById("importBtn").addEventListener("click", function(){
-    document.getElementById("importFile").click();
-  });
-
-  document.getElementById("importFile").addEventListener("change", function(e){
-    var f = e.target.files && e.target.files[0];
-    if(!f) return;
-    var reader = new FileReader();
-    reader.onload = function(){
-      var parsed = parseAny(reader.result);
-      e.target.value = "";
-      if(!parsed || !parsed.records.length){
-        alert("没读到有效数据。\n\nCSV 需要有表头，并且至少包含「数值 / value」这一列。");
+    var bars = "";
+    data.forEach(function(v, i){
+      var x = (i * slot + (slot - barW) / 2).toFixed(1);
+      if(!v){
+        bars += '<rect x="' + x + '" y="' + (padTop + plotH - 2) + '" width="' + barW.toFixed(1) +
+                '" height="2" rx="1" fill="#E6EBF4"/>';
         return;
       }
-      openCsvDialog(parsed);
-    };
-    reader.readAsText(f);
-  });
+      var bh = Math.max(3, (v / max) * plotH);
+      var y = (padTop + plotH - bh).toFixed(1);
+      var day = new Date(today.getTime() - (n - 1 - i) * DAY);
+      var tip = (day.getMonth() + 1) + "/" + day.getDate() + " · " + nf(v) + " 条";
+      bars += '<rect class="bar" style="animation-delay:' + (i * 9) + 'ms" x="' + x + '" y="' + y +
+              '" width="' + barW.toFixed(1) + '" height="' + bh.toFixed(1) +
+              '" rx="' + Math.min(3, barW / 2).toFixed(1) + '" fill="url(#barFill)"><title>' + tip + "</title></rect>";
+    });
 
-  function openCsvDialog(parsed){
-    pending = parsed;
-    var dupes = parsed.records.filter(function(r){
-      return state.records.some(function(x){ return sameRec(x, r); });
-    }).length;
+    var empty = total ? "" :
+      '<text x="' + (w / 2) + '" y="' + (padTop + plotH / 2) + '" text-anchor="middle" ' +
+      'font-family="ui-monospace,monospace" font-size="12" fill="#9AA3B2">还没有上传数据</text>';
 
-    document.getElementById("csvSummary").textContent =
-      "识别到 " + parsed.records.length + " 条记录" + (dupes ? "，其中 " + dupes + " 条已存在" : "");
+    // 峰值标注：只有一根柱子时也读得出量级
+    var peak = "";
+    if(total){
+      var mi = data.indexOf(max);
+      var px = Math.min(w - 18, Math.max(18, mi * slot + slot / 2));
+      peak = '<text x="' + px.toFixed(1) + '" y="' + (padTop - 8).toFixed(1) + '" text-anchor="middle" ' +
+        'font-family="ui-monospace,monospace" font-size="11" font-weight="600" fill="#6B7280">' +
+        nf(max) + "</text>";
+    }
 
-    document.getElementById("csvPreview").textContent = parsed.records.slice(0, 3).map(function(r){
-      return fmtTime(r.ts) + "  " + r.dataset + " · " + r.metric + "  " +
-        fmtValue(r.value) + (r.unit ? " " + r.unit : "") + (r.note ? "  ｜ " + r.note : "");
-    }).join("\n");
+    host.innerHTML =
+      '<svg viewBox="0 0 ' + w + " " + h + '" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<defs><linearGradient id="barFill" x1="0" y1="0" x2="0" y2="1">' +
+          '<stop offset="0%" stop-color="#3B82F6"/><stop offset="100%" stop-color="#2563EB"/>' +
+        "</linearGradient></defs>" +
+        grid + bars + peak + empty +
+      "</svg>";
 
-    var d = document.getElementById("csvDialog");
-    if(typeof d.showModal === "function"){ d.showModal(); } else { d.setAttribute("open", ""); }
+    var idxs = [], ticks = 5;
+    for(var t = 0; t < ticks; t++) idxs.push(Math.round((n - 1) * t / (ticks - 1)));
+    var now = Date.now();
+    document.getElementById("axis").innerHTML = idxs.map(function(i){
+      return "<li>" + fmtDate(now - (n - 1 - i) * DAY) + "</li>";
+    }).join("");
   }
 
-  function closeCsvDialog(){
-    var d = document.getElementById("csvDialog");
-    if(typeof d.close === "function"){ d.close(); } else { d.removeAttribute("open"); }
-    pending = null;
+  function drawMetrics(){
+    var today = new Date().toDateString();
+    var todayRows = 0;
+    files.forEach(function(f){
+      if(new Date(f.uploadedAt).toDateString() === today) todayRows += (f.rows || 0);
+    });
+    document.getElementById("mFiles").innerHTML = files.length + "<em>个</em>";
+    document.getElementById("mToday").innerHTML = nf(todayRows) + "<em>条</em>";
+    var size = totalSize();
+    document.getElementById("mSize").innerHTML =
+      size < 1024 ? size + "<em>B</em>"
+      : size < 1048576 ? (size / 1024).toFixed(1) + "<em>KB</em>"
+      : (size / 1048576).toFixed(2) + "<em>MB</em>";
   }
 
-  document.getElementById("csvCancel").addEventListener("click", closeCsvDialog);
+  function recentRow(f){
+    return '<tr data-id="' + f.id + '">' +
+      '<td class="c-time"><span>' + fmtTime(f.uploadedAt) + "</span></td>" +
+      '<td class="c-name"><span class="fname">' + esc(f.name) + "</span></td>" +
+      '<td class="c-rows"><span class="cell-num">' + (f.rows == null ? "—" : nf(f.rows)) + "</span></td>" +
+      '<td class="c-size"><span class="cell-num">' + kb(f.size) + "</span></td>" +
+      '<td class="c-act"><div class="act"><button type="button" data-dl="' + f.id +
+        '" title="下载原文件" aria-label="下载 ' + esc(f.name) + '">↓</button></div></td>' +
+    "</tr>";
+  }
 
-  function applyImport(mode){
-    if(!pending) return;
-    var incoming = pending.records.slice();
+  function drawRecent(){
+    var body = document.getElementById("recentRows");
+    var limit = expandedRecent ? OPEN_ROWS : SHUT_ROWS;
+    var shown = files.slice(0, limit);
 
-    if(mode === "append"){
-      incoming = incoming.filter(function(r){
-        return !state.records.some(function(x){ return sameRec(x, r); });
-      });
-      state.records = state.records.concat(incoming);
-      backfill(incoming);
+    if(!files.length){
+      body.innerHTML = '<tr><td colspan="5"><div class="empty"><strong>还没有上传任何数据</strong>' +
+        "点右上角「上传数据」，或者把 CSV、Excel、JSON 文件直接拖进来。</div></td></tr>";
     }else{
-      state.records = incoming;
-      state.series = state.series.map(function(){ return 0; });
-      if(pending.series){ state.series = pending.series.map(function(v){ return Number(v) || 0; }); }
-      else { backfill(incoming); }
+      body.innerHTML = shown.map(recentRow).join("");
     }
 
-    save();
-    render(false);
-    closeCsvDialog();
-    document.getElementById("live").textContent = "已导入 " + (mode === "append" ? incoming.length : state.records.length) + " 条记录";
+    var hidden = files.length - shown.length;
+    document.getElementById("recentFoot").textContent =
+      "共 " + files.length + " 个文件 · 合计 " + nf(totalRows()) + " 条" +
+      (hidden > 0 ? " · 当前显示最近 " + shown.length + " 个" : "");
+
+    var tg = document.getElementById("recentToggle");
+    if(files.length <= SHUT_ROWS){
+      tg.hidden = true;
+    }else{
+      tg.hidden = false;
+      tg.textContent = expandedRecent ? "收起" : ("展开 " + Math.min(OPEN_ROWS, files.length) + " 个");
+      tg.setAttribute("aria-expanded", expandedRecent ? "true" : "false");
+    }
   }
 
-  document.getElementById("csvAppend").addEventListener("click", function(){ applyImport("append"); });
-  document.getElementById("csvReplace").addEventListener("click", function(){ applyImport("replace"); });
+  function drawRail(){
+    var size = totalSize();
+    document.getElementById("usageText").textContent = kb(size);
+    document.getElementById("kvFiles").textContent = files.length + " 个";
+    document.getElementById("kvRows").textContent = nf(totalRows()) + " 条";
 
-  /* ---------- remote source ---------- */
-  function setSrcUI(){
-    var st = document.getElementById("srcState");
-    var src = state.src;
-    st.textContent = !src ? "未连接" : (src.last ? "已连接" : "待同步");
-    document.getElementById("srcUrl").value = src ? src.url : "";
-    document.getElementById("srcLast").textContent = (src && src.last) ? fmtTime(src.last) : "—";
-    document.getElementById("srcCount").textContent = (src && src.count != null) ? src.count + " 条" : "—";
+    var pct = 1, label = "0%";
+    if(size && quota && quota.quota){
+      pct = Math.min(100, Math.max(0.6, (size / quota.quota) * 100));
+      var raw = (size / quota.quota) * 100;
+      label = raw < 0.1 ? "＜0.1%" : raw.toFixed(1) + "%";
+    }else if(size){
+      pct = 100;
+      label = "本地";
+    }
+    document.getElementById("trackFill").style.width = pct.toFixed(1) + "%";
+    document.getElementById("track").setAttribute("aria-valuenow", Math.round(pct));
+    document.getElementById("stPct").textContent = label;
+
+    document.getElementById("dsCount").textContent = files.length;
+    var list = dsExpanded ? files : files.slice(0, DS_SHUT);
+    document.getElementById("dsList").innerHTML = list.length
+      ? list.map(function(f){
+          return '<div class="ds-row"><span>' + esc(f.name) + "</span><span>" +
+            (f.rows == null ? "—" : nf(f.rows)) + "</span></div>";
+        }).join("")
+      : '<div class="ds-row"><span>还没有上传文件</span><span>0</span></div>';
+
+    var dt = document.getElementById("dsToggle");
+    if(files.length <= DS_SHUT){
+      dt.hidden = true;
+    }else{
+      dt.hidden = false;
+      dt.textContent = dsExpanded ? "收起" : ("展开全部 " + files.length + " 个");
+      dt.setAttribute("aria-expanded", dsExpanded ? "true" : "false");
+    }
   }
 
-  document.getElementById("srcSave").addEventListener("click", function(){
-    var url = document.getElementById("srcUrl").value.trim();
-    if(!url){
-      state.src = null;
-      save(); setSrcUI();
-      document.getElementById("live").textContent = "已断开数据源";
+  /* ================= 数据表 ================= */
+
+  function previewBlock(f){
+    var pv = Array.isArray(f.preview) ? f.preview : [];
+    if(!pv.length){
+      return '<div class="prev-wrap"><p class="prev-note">' +
+        esc(f.warn || "这个文件暂时无法预览内容。") + "</p></div>";
+    }
+    var cols = 1;
+    pv.forEach(function(r){ if(r.length > cols) cols = r.length; });
+    var head = (f.headers && f.headers.length) ? f.headers : null;
+
+    var headCells = "";
+    for(var c = 0; c < cols; c++){
+      headCells += "<th>" + esc(head ? (head[c] == null ? "" : head[c]) : ("列 " + (c + 1))) + "</th>";
+    }
+    var bodyCells = pv.map(function(r){
+      var tds = "";
+      for(var i = 0; i < cols; i++) tds += "<td>" + esc(r[i] == null ? "" : r[i]) + "</td>";
+      return "<tr>" + tds + "</tr>";
+    }).join("");
+
+    return '<div class="prev-wrap"><table><thead><tr>' + headCells + "</tr></thead><tbody>" +
+      bodyCells + "</tbody></table>" +
+      '<p class="prev-note">仅预览前 ' + pv.length + " 行 · 全表 " +
+      (f.rows == null ? "未知" : nf(f.rows)) + " 条" + (head ? " · 表头不计入条数" : "") + "</p></div>";
+  }
+
+  function fileRow(f){
+    var open = !!expandedFiles[f.id];
+    var row =
+      '<tr data-id="' + f.id + '" aria-expanded="' + (open ? "true" : "false") + '">' +
+        '<td class="c-name"><span class="file-name" data-toggle="' + f.id + '" role="button" tabindex="0" ' +
+          'aria-label="展开 ' + esc(f.name) + ' 的预览">' +
+          '<i class="caret" aria-hidden="true">▶</i>' +
+          '<span class="ext" data-ext="' + f.ext + '">' + esc(f.ext) + "</span>" +
+          '<span class="fname">' + esc(f.name) + "</span>" +
+        "</span></td>" +
+        '<td class="c-rows"><span class="cell-num">' + (f.rows == null ? "—" : nf(f.rows)) + "</span></td>" +
+        '<td class="c-size"><span class="cell-num">' + kb(f.size) + "</span></td>" +
+        '<td class="c-time"><span>' + fmtTime(f.uploadedAt) + "</span></td>" +
+        '<td class="c-act"><div class="act">' +
+          '<button type="button" data-dl="' + f.id + '" title="下载原文件" aria-label="下载 ' +
+            esc(f.name) + '">↓</button>' +
+          '<button type="button" data-kill="' + f.id + '" title="删除" aria-label="删除 ' +
+            esc(f.name) + '">×</button>' +
+        "</div></td>" +
+      "</tr>";
+    if(open) row += '<tr class="prev-row"><td colspan="5">' + previewBlock(f) + "</td></tr>";
+    return row;
+  }
+
+  function drawFiles(){
+    var body = document.getElementById("filesBody");
+    document.getElementById("filesMeta").textContent =
+      "共 " + files.length + " 个文件 · 合计 " + nf(totalRows()) + " 条 · " + kb(totalSize());
+
+    body.innerHTML = files.length
+      ? files.map(fileRow).join("")
+      : '<tr><td colspan="5"><div class="empty"><strong>还没有文件</strong>' +
+        "把 CSV、Excel 或 JSON 拖到上面的框里，或者点一下选择文件。</div></td></tr>";
+  }
+
+  /* ================= 存储 ================= */
+
+  function drawQuota(){
+    var size = totalSize();
+    var txt = document.getElementById("quotaText");
+    var fill = document.getElementById("quotaFill");
+    if(!quota || !quota.quota){
+      txt.textContent = kb(size) + " / 未知";
+      fill.style.width = "1%";
       return;
     }
-    if(!/^https?:\/\//i.test(url)){
-      alert("请填完整地址，以 http:// 或 https:// 开头。");
+    txt.textContent = kb(size) + " / " + kb(quota.quota);
+    var pct = Math.min(100, Math.max(0.5, (size / quota.quota) * 100));
+    fill.style.width = pct.toFixed(1) + "%";
+    document.getElementById("quotaTrack").setAttribute("aria-valuenow", Math.round(pct));
+  }
+
+  function drawStorage(){
+    var size = totalSize();
+    var host = document.getElementById("donut");
+    var legend = document.getElementById("legend");
+
+    document.getElementById("donutTotal").textContent = kb(size);
+    document.getElementById("stFiles").textContent = files.length + " 个";
+    document.getElementById("stRows").textContent = nf(totalRows()) + " 条";
+
+    var biggest = files.slice().sort(function(a, b){ return b.size - a.size; })[0];
+    document.getElementById("stMax").textContent = biggest ? kb(biggest.size) : "—";
+
+    var R = 78, C = 2 * Math.PI * R, cx = 110, cy = 110;
+
+    if(!size){
+      host.innerHTML = '<svg viewBox="0 0 220 220" width="220" height="220">' +
+        '<circle cx="110" cy="110" r="78" fill="none" stroke="#EDF1F8" stroke-width="26"/>' +
+        '<text x="110" y="106" text-anchor="middle" font-family="ui-monospace,monospace" font-size="15" font-weight="600" fill="#0A0D14">0 B</text>' +
+        '<text x="110" y="126" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#9AA3B2">还没有文件</text>' +
+        "</svg>";
+      legend.innerHTML = '<div class="lg"><i style="background:#EDF1F8"></i>' +
+        '<span class="n">暂无数据</span><span class="v">—</span></div>';
+      drawQuota();
       return;
     }
-    state.src = { url: url, last: null, count: null };
-    save(); setSrcUI();
-    syncSource(true);
-  });
 
-  document.getElementById("srcSync").addEventListener("click", function(){ syncSource(true); });
-
-  function syncSource(manual){
-    if(!state.src || !state.src.url){
-      if(manual) alert("先在输入框里填一个数据源地址，再点「保存地址」。");
-      return;
-    }
-    var st = document.getElementById("srcState");
-    st.textContent = "同步中";
-
-    fetch(state.src.url, {cache: "no-store"})
-      .then(function(res){
-        if(!res.ok) throw new Error("HTTP " + res.status);
-        return res.text();
-      })
-      .then(function(text){
-        var parsed = parseAny(text);
-        if(!parsed || !parsed.records.length) throw new Error("内容里没有可用的记录");
-
-        var incoming = parsed.records.filter(function(r){
-          return !state.records.some(function(x){ return sameRec(x, r); });
-        });
-        state.records = state.records.concat(incoming);
-        backfill(incoming);
-
-        state.src.last = Date.now();
-        state.src.count = incoming.length;
-        save(); render(false); setSrcUI();
-        document.getElementById("live").textContent = "已从数据源同步，新增 " + incoming.length + " 条";
-      })
-      .catch(function(err){
-        st.textContent = "同步失败";
-        document.getElementById("live").textContent = "数据源同步失败：" + (err && err.message ? err.message : "未知错误");
+    var sorted = files.slice().sort(function(a, b){ return b.size - a.size; });
+    var items = sorted.slice(0, 6).map(function(f){ return { name: f.name, size: f.size }; });
+    var rest = sorted.slice(6);
+    if(rest.length){
+      items.push({
+        name: "其他 " + rest.length + " 个文件",
+        size: rest.reduce(function(s, f){ return s + f.size; }, 0)
       });
+    }
+
+    var off = 0, arcs = "";
+    items.forEach(function(it, i){
+      var color = PAL[i % PAL.length];
+      var len = Math.max(0, (it.size / size) * C - 1.5);
+      arcs += '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="none" stroke="' + color +
+        '" stroke-width="26" stroke-dasharray="' + len.toFixed(2) + " " + (C - len).toFixed(2) +
+        '" stroke-dashoffset="' + (-off).toFixed(2) +
+        '" transform="rotate(-90 ' + cx + " " + cy + ')"><title>' +
+        esc(it.name) + " · " + kb(it.size) + "</title></circle>";
+      off += (it.size / size) * C;
+    });
+
+    host.innerHTML = '<svg viewBox="0 0 220 220" width="220" height="220" aria-hidden="true">' +
+      '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="none" stroke="#F3F6FB" stroke-width="26"/>' +
+      arcs +
+      '<text x="110" y="104" text-anchor="middle" font-family="ui-monospace,monospace" font-size="17" font-weight="600" fill="#0A0D14">' + kb(size) + "</text>" +
+      '<text x="110" y="124" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#9AA3B2">共 ' + files.length + " 个文件</text>" +
+      "</svg>";
+
+    legend.innerHTML = items.map(function(it, i){
+      return '<div class="lg"><i style="background:' + PAL[i % PAL.length] + '"></i>' +
+        '<span class="n">' + esc(it.name) + "</span>" +
+        '<span class="v">' + kb(it.size) + " · " + ((it.size / size) * 100).toFixed(1) + "%</span></div>";
+    }).join("");
+
+    drawQuota();
   }
 
-  document.getElementById("clearBtn").addEventListener("click", function(){
-    if(!confirm("清空全部记录？趋势也会一起归零。此操作不可撤销。")) return;
-    state.records = [];
-    state.series = state.series.map(function(){ return 0; });
-    state.backupAt = null;
-    save(); render(false);
-    document.getElementById("live").textContent = "已清空全部记录";
+  /* ================= 关于 ================= */
+
+  function drawAbout(){
+    document.getElementById("aboutFiles").textContent = files.length + " 个";
+    document.getElementById("aboutRows").textContent = nf(totalRows()) + " 条";
+    document.getElementById("aboutSize").textContent = kb(totalSize());
+  }
+
+  /* ================= 总渲染 ================= */
+
+  function renderAll(){
+    drawHero(false);
+    drawChart();
+    drawMetrics();
+    drawRecent();
+    drawRail();
+    drawFiles();
+    drawStorage();
+    drawAbout();
+  }
+
+  /* ================= 路由 ================= */
+
+  var VIEWS = ["overview", "data", "storage", "about"];
+  var ALIAS = { "": "overview", top: "overview", records: "data" };
+
+  function route(){
+    var h = (location.hash || "").replace(/^#\/?/, "");
+    if(ALIAS[h]) h = ALIAS[h];
+    if(VIEWS.indexOf(h) < 0) h = "overview";
+
+    VIEWS.forEach(function(v){
+      var el = document.getElementById("pane-" + v);
+      if(el) el.classList.toggle("is-on", v === h);
+    });
+    document.querySelectorAll(".nav a").forEach(function(a){
+      if(a.getAttribute("data-nav") === h) a.setAttribute("aria-current", "page");
+      else a.removeAttribute("aria-current");
+    });
+    window.scrollTo(0, 0);
+
+    if(h === "overview"){ drawChart(); drawHero(false); }
+    else if(h === "data") drawFiles();
+    else if(h === "storage") drawStorage();
+    else if(h === "about") drawAbout();
+  }
+
+  /* ================= 事件 ================= */
+
+  var input = document.getElementById("fileInput");
+
+  function pickFiles(){
+    if(input){ input.value = ""; input.click(); }
+  }
+
+  // 拖拽时的高亮：用一层覆盖全屏的提示，避免在概览页看不出可以放
+  var veil = document.getElementById("veil");
+  function setVeil(on){
+    if(!veil) return;
+    veil.classList.toggle("is-on", !!on);
+  }
+
+  input.addEventListener("change", function(e){
+    if(e.target.files && e.target.files.length) handleFiles(e.target.files);
+    e.target.value = "";
   });
 
-  document.addEventListener("keydown", function(e){
-    if(e.key === "Escape" && document.getElementById("addDialog").hasAttribute("open")) closeDialog();
+  document.getElementById("uploadBtn").addEventListener("click", pickFiles);
+  document.getElementById("drop").addEventListener("click", pickFiles);
+  document.getElementById("drop").addEventListener("keydown", function(e){
+    if(e.key === "Enter" || e.key === " "){ e.preventDefault(); pickFiles(); }
   });
 
-  /* ---------- boot ---------- */
-  (function stamp(){
+  document.getElementById("toStorage").addEventListener("click", function(){ location.hash = "#storage"; });
+  document.getElementById("toData").addEventListener("click", function(){ location.hash = "#data"; });
+
+  function hasFiles(e){
+    var t = e.dataTransfer;
+    if(!t) return false;
+    if(t.types){ for(var i = 0; i < t.types.length; i++){ if(t.types[i] === "Files") return true; } }
+    return false;
+  }
+
+  var dragDepth = 0;
+  window.addEventListener("dragenter", function(e){
+    if(!hasFiles(e)) return;
+    e.preventDefault();
+    dragDepth++;
+    setVeil(true);
+    document.getElementById("drop").classList.add("is-over");
+  });
+  window.addEventListener("dragover", function(e){
+    if(!hasFiles(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  });
+  window.addEventListener("dragleave", function(e){
+    if(!hasFiles(e)) return;
+    dragDepth = Math.max(0, dragDepth - 1);
+    if(!dragDepth){ setVeil(false); document.getElementById("drop").classList.remove("is-over"); }
+  });
+  window.addEventListener("drop", function(e){
+    if(!hasFiles(e)) return;
+    e.preventDefault();
+    dragDepth = 0;
+    setVeil(false);
+    document.getElementById("drop").classList.remove("is-over");
+    if(e.dataTransfer.files && e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+  });
+
+  var seg = document.getElementById("seg");
+  seg.addEventListener("click", function(e){
+    var btn = e.target.closest("button[data-range]");
+    if(!btn) return;
+    var next = parseInt(btn.getAttribute("data-range"), 10);
+    if(next === range) return;
+    seg.querySelectorAll("button[data-range]").forEach(function(b){
+      b.setAttribute("aria-selected", String(parseInt(b.getAttribute("data-range"), 10) === next));
+    });
+    seg.dataset.range = String(next);
+    range = next;
+    var chartEl = document.getElementById("chart");
+    chartEl.classList.add("is-swapping");
+    window.setTimeout(function(){
+      drawChart();
+      drawHero(true);
+      chartEl.classList.remove("is-swapping");
+      live("已切换到近 " + range + " 天");
+    }, reduceMotion ? 0 : 150);
+  });
+
+  document.getElementById("recentToggle").addEventListener("click", function(){
+    expandedRecent = !expandedRecent;
+    drawRecent();
+    live(expandedRecent ? "已展开最近 " + OPEN_ROWS + " 个" : "已收起");
+  });
+
+  document.getElementById("dsToggle").addEventListener("click", function(){
+    dsExpanded = !dsExpanded;
+    drawRail();
+    live(dsExpanded ? "已展开全部文件" : "已收起");
+  });
+
+  function findFile(id){
+    for(var i = 0; i < files.length; i++) if(files[i].id === id) return files[i];
+    return null;
+  }
+
+  function doDownload(id, btn){
+    var f = findFile(id);
+    if(!f){ live("找不到这个文件"); return; }
+    if(download(f.name, f.blob, f.mime)){
+      sync("ok", "已下载 " + f.name);
+      flash(btn, "✓");
+      live("已下载 " + f.name);
+    }else{
+      sync("error", "下载失败");
+      live("下载失败，请换一个浏览器再试");
+    }
+  }
+
+  async function doDelete(id){
+    var f = findFile(id);
+    if(!f) return;
+    if(!confirm("删除「" + f.name + "」？原文件也会一起删掉，不能撤销。")) return;
+    try{
+      await idbDel(id);
+      delete expandedFiles[id];
+      await reload();
+      renderAll();
+      sync("ok", "已删除 1 个文件");
+      live("已删除 " + f.name);
+    }catch(e){
+      sync("error", "删除失败");
+    }
+  }
+
+  document.getElementById("recentRows").addEventListener("click", function(e){
+    var btn = e.target.closest("[data-dl]");
+    if(btn) doDownload(btn.getAttribute("data-dl"), btn);
+  });
+
+  document.getElementById("filesBody").addEventListener("click", function(e){
+    var dl = e.target.closest("[data-dl]");
+    if(dl){ doDownload(dl.getAttribute("data-dl"), dl); return; }
+
+    var kill = e.target.closest("[data-kill]");
+    if(kill){ doDelete(kill.getAttribute("data-kill")); return; }
+
+    var tg = e.target.closest("[data-toggle]");
+    if(tg){
+      var id = tg.getAttribute("data-toggle");
+      expandedFiles[id] = !expandedFiles[id];
+      drawFiles();
+      live(expandedFiles[id] ? "已展开预览" : "已收起");
+    }
+  });
+
+  document.getElementById("filesBody").addEventListener("keydown", function(e){
+    if(e.key !== "Enter" && e.key !== " ") return;
+    var tg = e.target.closest("[data-toggle]");
+    if(!tg) return;
+    e.preventDefault();
+    var id = tg.getAttribute("data-toggle");
+    expandedFiles[id] = !expandedFiles[id];
+    drawFiles();
+  });
+
+  document.getElementById("clearAll").addEventListener("click", async function(){
+    if(!files.length){ live("还没有文件可清空"); return; }
+    if(!confirm("清空全部 " + files.length + " 个文件？文件和统计数据都会消失，不能撤销。")) return;
+    try{
+      await idbClear();
+      expandedFiles = {};
+      await reload();
+      renderAll();
+      sync("ok", "已清空全部文件");
+      live("已清空全部文件");
+    }catch(e){
+      sync("error", "清空失败");
+    }
+  });
+
+  var resizeTimer = null;
+  window.addEventListener("resize", function(){
+    if(resizeTimer) window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(function(){
+      if(document.getElementById("pane-overview").classList.contains("is-on")) drawChart();
+    }, 160);
+  });
+
+  window.addEventListener("hashchange", route);
+
+  /* ================= 启动 ================= */
+
+  (function stampBar(){
     var d = new Date();
-    var names = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
+    var names = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
     document.getElementById("stamp").textContent =
       d.getFullYear() + "." + pad(d.getMonth() + 1) + "." + pad(d.getDate()) + " · " + names[d.getDay()];
   })();
 
-  render(false);
-  setSrcUI();
-  if(state.src && state.src.url) syncSource(false);
-  var now = new Date();
-  sync("ok", "已保存 " + pad(now.getHours()) + ":" + pad(now.getMinutes()));
+  if(navigator.storage && navigator.storage.estimate){
+    navigator.storage.estimate().then(function(est){
+      quota = est || null;
+      drawRail();
+      drawStorage();
+    }).catch(function(){ /* 拿不到配额就退化为不显示 */ });
+  }
+
+  openDB()
+    .then(idbAll)
+    .then(function(list){
+      list.sort(function(a, b){ return b.uploadedAt - a.uploadedAt; });
+      files = list;
+      renderAll();
+      sync("ok", files.length ? "已加载 " + files.length + " 个文件" : "就绪");
+    })
+    .catch(function(){
+      files = [];
+      renderAll();
+      sync("error", "本地存储不可用");
+      live("这个浏览器不支持或禁用了 IndexedDB，文件无法保存。");
+    });
+
+  route();
 })();
 </script>
+
 </body>
 </html>
