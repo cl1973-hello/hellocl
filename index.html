@@ -299,6 +299,14 @@
 
   .ds-row{display:flex;align-items:center;justify-content:space-between;gap:12px;height:32px;font-size:14px}
   .ds-row span:last-child{font-family:var(--mono);font-size:12.5px;color:var(--mute-2)}
+  .mini-toggle{
+    align-self:flex-start;font-family:var(--sans);font-size:12.5px;font-weight:600;
+    color:var(--blue);background:var(--blue-soft);border:0;border-radius:var(--pill);
+    padding:6px 14px;cursor:pointer;
+    transition:background .2s ease,color .2s ease,transform .18s ease;
+  }
+  .mini-toggle:hover{background:#DFE9FF;color:var(--blue-deep);transform:translateY(-1px)}
+  .mini-toggle[hidden]{display:none}
   .note{font-size:13px;font-weight:400;line-height:1.85;color:var(--mute);margin:0;padding:0 2px}
 
   .src input{
@@ -553,6 +561,7 @@
         <span class="num" id="dsCount">0</span>
       </div>
       <div id="dsList"></div>
+      <button class="mini-toggle" type="button" id="dsToggle" aria-expanded="false" aria-controls="dsList" hidden>展开全部</button>
       <button class="btn" type="button" id="importBtn" style="align-self:stretch">导入 CSV / JSON</button>
       <input type="file" id="importFile" accept=".csv,.json,text/csv,application/json" hidden>
     </div>
@@ -676,6 +685,8 @@
   var range = 30;
   var filter = "";
   var displayed = 0;
+  var DS_SHUT = 4;
+  var dsExpanded = false;
   var state = load();
 
   function load(){
@@ -878,11 +889,22 @@
     state.records.forEach(function(r){ bySet[r.dataset] = (bySet[r.dataset] || 0) + 1; });
     var dsKeys = Object.keys(bySet);
     document.getElementById("dsCount").textContent = dsKeys.length;
-    document.getElementById("dsList").innerHTML = dsKeys.length
-      ? dsKeys.map(function(k){
+
+    var dsShown = dsExpanded ? dsKeys : dsKeys.slice(0, DS_SHUT);
+    document.getElementById("dsList").innerHTML = dsShown.length
+      ? dsShown.map(function(k){
           return '<div class="ds-row"><span>' + esc(k) + "</span><span>" + bySet[k] + "</span></div>";
         }).join("")
       : '<div class="ds-row"><span>还没有数据集</span><span>0</span></div>';
+
+    var dt = document.getElementById("dsToggle");
+    if(dsKeys.length <= DS_SHUT){
+      dt.hidden = true;
+    }else{
+      dt.hidden = false;
+      dt.textContent = dsExpanded ? "收起" : ("展开全部 " + dsKeys.length + " 个");
+      dt.setAttribute("aria-expanded", dsExpanded ? "true" : "false");
+    }
 
     var sel = document.getElementById("filterDs");
     sel.innerHTML = '<option value="">全部数据集</option>' + dsKeys.map(function(k){
@@ -959,6 +981,19 @@
       drawRows();
       body.style.opacity = "1";
       document.getElementById("live").textContent = expanded ? "已展开最近 " + OPEN_ROWS + " 条" : "已收起记录";
+    }, 140);
+  });
+
+  document.getElementById("dsToggle").addEventListener("click", function(){
+    dsExpanded = !dsExpanded;
+    var list = document.getElementById("dsList");
+    if(reduceMotion){ drawStats(); return; }
+    list.style.transition = "opacity .14s ease";
+    list.style.opacity = "0";
+    window.setTimeout(function(){
+      drawStats();
+      list.style.opacity = "1";
+      document.getElementById("live").textContent = dsExpanded ? "已展开全部数据集" : "已收起数据集";
     }, 140);
   });
 
