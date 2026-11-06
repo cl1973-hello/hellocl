@@ -293,7 +293,24 @@
   .ds-row span:last-child{font-family:var(--mono);font-size:12.5px;color:var(--mute-2)}
   .note{font-size:13px;font-weight:400;line-height:1.85;color:var(--mute);margin:0;padding:0 2px}
 
+  .src input{
+    width:100%;height:40px;border:1px solid var(--rule);border-radius:var(--r-sm);
+    background-color:#F7F9FC;padding:0 12px;
+    font-family:var(--mono);font-size:12.5px;font-weight:400;color:var(--ink);
+    transition:border-color .2s ease,box-shadow .2s ease,background-color .2s ease;
+  }
+  .src input::placeholder{color:#AEB6C4}
+  .src input:focus{outline:none;border-color:var(--blue);background-color:#fff;box-shadow:0 0 0 4px rgba(37,99,235,.14)}
+  .hint-inline{font-size:11.5px;font-weight:400;line-height:1.65;color:var(--mute);margin:0}
+  .kv-2 div{height:34px;font-size:13px}
+
   /* ---------- dialog ---------- */
+  .csv-sum{font-size:14.5px;font-weight:600;margin:0 0 12px}
+  .csv-preview{
+    font-family:var(--mono);font-size:11.5px;line-height:1.8;color:var(--mute);
+    background-color:#F7F9FC;border:1px solid var(--rule);border-radius:var(--r-md);
+    padding:11px 13px;margin-bottom:16px;max-height:132px;overflow:auto;white-space:pre;
+  }
   dialog{
     border:1px solid var(--rule);border-radius:20px;background:#fff;
     padding:28px;width:min(460px,calc(100vw - 32px));color:var(--ink);
@@ -528,8 +545,28 @@
         <span class="num" id="dsCount">0</span>
       </div>
       <div id="dsList"></div>
-      <button class="btn btn-ghost" type="button" id="importBtn" style="align-self:flex-start">导入备份</button>
-      <input type="file" id="importFile" accept="application/json" hidden>
+      <button class="btn" type="button" id="importBtn" style="align-self:stretch">导入 CSV / JSON</button>
+      <input type="file" id="importFile" accept=".csv,.json,text/csv,application/json" hidden>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>外部数据源</h2>
+        <span class="num" id="srcState">未连接</span>
+      </div>
+      <div class="src">
+        <label class="sr" for="srcUrl">数据源地址</label>
+        <input id="srcUrl" type="url" placeholder="https://…/data.csv" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="kv kv-2">
+        <div><span>最后同步</span><b id="srcLast">—</b></div>
+        <div><span>本次新增</span><b id="srcCount">—</b></div>
+      </div>
+      <div class="card-actions">
+        <button class="btn" type="button" id="srcSave">保存地址</button>
+        <button class="btn btn-solid" type="button" id="srcSync">立即同步</button>
+      </div>
+      <p class="hint-inline">CSV 或 JSON 都认，只追加、重复的自动跳过。地址需允许跨域读取（GitHub raw、jsDelivr 可以）。</p>
     </div>
 
     <p class="note">数据只存在这台设备的浏览器里，不上传服务器。随时导出 CSV 或 JSON，换设备时导入即可。<br><button class="btn btn-ghost btn-danger" type="button" id="clearBtn" style="font-size:13px;margin-top:4px">清空全部记录</button></p>
@@ -587,6 +624,18 @@
       <button class="btn btn-solid" type="submit">保存</button>
     </menu>
   </form>
+</dialog>
+
+<dialog id="csvDialog" aria-labelledby="csvTitle">
+  <h2 id="csvTitle">导入数据</h2>
+  <p class="csv-sum" id="csvSummary"></p>
+  <div class="csv-preview" id="csvPreview"></div>
+  <p class="hint">追加会跳过已存在的重复记录；覆盖会先清空现有记录，再按导入数据的日期重建趋势。</p>
+  <menu>
+    <button class="btn" type="button" id="csvCancel">取消</button>
+    <button class="btn" type="button" id="csvAppend">追加</button>
+    <button class="btn btn-solid" type="button" id="csvReplace">覆盖</button>
+  </menu>
 </dialog>
 
 <div class="sr" id="live" role="status" aria-live="polite"></div>
@@ -653,6 +702,7 @@
     });
 
     if(typeof d.autoSave !== "boolean") d.autoSave = true;
+    if(!d.src || typeof d.src !== "object" || !d.src.url) d.src = null;
     return d;
   }
 
@@ -1012,6 +1062,160 @@
     }
   });
 
+  /* ---------- import: CSV / JSON ---------- */
+  var pending = null;
+
+  function nextId(){ return "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+  function parseNum(v){
+    if(v == null) return null;
+    var s = String(v).replace(/[,\s]/g, "").replace(/[^\d.\-+eE]/g, "");
+    if(s === "" || s === "-" || s === "." || s === "+") return null;
+    var n = parseFloat(s);
+    return isFinite(n) ? n : null;
+  }
+
+  function parseTime(v){
+    if(v == null || v === "") return Date.now();
+    if(typeof v === "number") return v < 1e12 ? Math.round(v * 1000) : v;
+    var s = String(v).trim();
+    if(!s) return Date.now();
+    var hm = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if(hm){ var d0 = new Date(); d0.setHours(+hm[1], +hm[2], +(hm[3] || 0), 0); return d0.getTime(); }
+    var n = Date.parse(s);
+    if(!isNaN(n)) return n;
+    n = Date.parse(s.replace(/\//g, "-").replace(" ", "T"));
+    if(!isNaN(n)) return n;
+    n = Date.parse(s.replace(/\./g, "-").replace(" ", "T"));
+    if(!isNaN(n)) return n;
+    return Date.now();
+  }
+
+  function parseCSV(text){
+    var first = (text.split(/\r?\n/)[0] || "");
+    var c = { ",": (first.match(/,/g) || []).length, ";": (first.match(/;/g) || []).length, "\t": (first.match(/\t/g) || []).length };
+    var delim = ",";
+    if(c[";"] > c[delim]) delim = ";";
+    if(c["\t"] > c[delim]) delim = "\t";
+
+    var rows = [], row = [], cur = "", q = false, i, ch;
+    for(i = 0; i < text.length; i++){
+      ch = text.charAt(i);
+      if(q){
+        if(ch === '"'){
+          if(text.charAt(i + 1) === '"'){ cur += '"'; i++; }
+          else { q = false; }
+        } else { cur += ch; }
+      }else{
+        if(ch === '"'){ q = true; }
+        else if(ch === delim){ row.push(cur); cur = ""; }
+        else if(ch === "\n"){ row.push(cur); rows.push(row); row = []; cur = ""; }
+        else if(ch === "\r"){ /* ignore */ }
+        else { cur += ch; }
+      }
+    }
+    if(cur.length || row.length){ row.push(cur); rows.push(row); }
+    return rows.filter(function(r){ return r.length && r.join("").trim() !== ""; });
+  }
+
+  var HEAD = {
+    ts:      ["时间","日期","time","date","ts","timestamp","datetime","created"],
+    dataset: ["数据集","dataset","set","来源","source","channel"],
+    metric:  ["指标","metric","name","项目","item","measure"],
+    note:    ["备注","note","memo","remark","comment","desc"],
+    value:   ["数值","value","val","count","数量","值","amount"],
+    unit:    ["单位","unit"],
+    status:  ["状态","status"]
+  };
+
+  function fromCSV(t){
+    var rows = parseCSV(t);
+    if(rows.length < 2) return null;
+    var header = rows[0].map(function(h){ return String(h).trim().toLowerCase(); });
+    var map = {}, body = rows.slice(1);
+
+    Object.keys(HEAD).forEach(function(k){
+      for(var i = 0; i < header.length; i++){
+        if(HEAD[k].indexOf(header[i]) >= 0 && map[k] == null){ map[k] = i; break; }
+      }
+    });
+
+    if(map.value == null){
+      if(header.length < 5) return null;
+      if(/数值|value|时间|time|数据集|dataset/.test(header.join(" "))){ return null; }
+      map = { ts:0, dataset:1, metric:2, note:3, value:4, unit:5, status:6 };
+      body = rows;
+    }
+
+    var out = [];
+    body.forEach(function(cells){
+      var value = parseNum(cells[map.value]);
+      if(value === null) return;
+      out.push({
+        id: nextId(),
+        ts: parseTime(cells[map.ts]),
+        dataset: String(cells[map.dataset] || "其他").trim() || "其他",
+        metric: String(cells[map.metric] || "未命名指标").trim() || "未命名指标",
+        value: value,
+        unit: String(cells[map.unit] || "").trim(),
+        note: String(cells[map.note] || "").trim(),
+        status: String(cells[map.status] || "").indexOf("待") === 0 ? "check" : "ok"
+      });
+    });
+    return out.length ? { records: out, series: null } : null;
+  }
+
+  function normRecord(r){
+    if(!r || typeof r !== "object") return null;
+    var value = parseNum(r.value != null ? r.value : (r["数值"] != null ? r["数值"] : r.count));
+    if(value === null) return null;
+    var st = String(r.status || r["状态"] || "");
+    return {
+      id: r.id || nextId(),
+      ts: parseTime(r.ts || r.time || r.date || r["时间"]),
+      dataset: String(r.dataset || r.set || r.source || r["数据集"] || "其他").trim() || "其他",
+      metric: String(r.metric || r.name || r["指标"] || "未命名指标").trim() || "未命名指标",
+      value: value,
+      unit: String(r.unit || r["单位"] || "").trim(),
+      note: String(r.note || r.memo || r["备注"] || "").trim(),
+      status: (st.indexOf("待") === 0 || st === "check") ? "check" : "ok"
+    };
+  }
+
+  function fromJSON(t){
+    var d;
+    try{ d = JSON.parse(t); }catch(e){ return null; }
+    var arr = Array.isArray(d) ? d : (d && Array.isArray(d.records) ? d.records : null);
+    if(!arr) return null;
+    var recs = arr.map(normRecord).filter(Boolean);
+    if(!recs.length) return null;
+    return {
+      records: recs,
+      series: (d && !Array.isArray(d) && Array.isArray(d.series) && d.series.length === DAYS) ? d.series : null
+    };
+  }
+
+  function parseAny(text){
+    var t = String(text || "").replace(/^\uFEFF/, "").trim();
+    if(!t) return null;
+    if(t.charAt(0) === "{" || t.charAt(0) === "[") return fromJSON(t);
+    return fromCSV(t);
+  }
+
+  function sameRec(a, b){
+    return Math.abs(a.ts - b.ts) < 60000 && a.dataset === b.dataset && a.metric === b.metric && a.value === b.value;
+  }
+
+  function backfill(list){
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    list.forEach(function(r){
+      var d = new Date(r.ts); d.setHours(0, 0, 0, 0);
+      var diff = Math.round((today - d) / DAY);
+      var idx = state.series.length - 1 - diff;
+      if(idx >= 0 && idx < state.series.length){ state.series[idx] += r.value; }
+    });
+  }
+
   document.getElementById("importBtn").addEventListener("click", function(){
     document.getElementById("importFile").click();
   });
@@ -1021,34 +1225,131 @@
     if(!f) return;
     var reader = new FileReader();
     reader.onload = function(){
-      try{
-        var d = JSON.parse(reader.result);
-        if(Array.isArray(d.records)){
-          state.records = d.records.map(function(r){
-            return {
-              id: r.id || ("r" + Math.random().toString(36).slice(2,8)),
-              ts: r.ts || Date.now(),
-              dataset: r.dataset || "其他",
-              metric: r.metric || "未命名指标",
-              value: Number(r.value) || 0,
-              unit: r.unit || "",
-              status: r.status === "check" ? "check" : "ok",
-              note: typeof r.note === "string" ? r.note : ""
-            };
-          });
-          if(Array.isArray(d.series) && d.series.length === DAYS){
-            state.series = d.series.map(function(v){ return Number(v) || 0; });
-          }
-          save(); render(false);
-          document.getElementById("live").textContent = "已导入 " + d.records.length + " 条记录";
-        }
-      }catch(err){
-        sync("error", "文件读不了");
-      }
+      var parsed = parseAny(reader.result);
       e.target.value = "";
+      if(!parsed || !parsed.records.length){
+        alert("没读到有效数据。\n\nCSV 需要有表头，并且至少包含「数值 / value」这一列。");
+        return;
+      }
+      openCsvDialog(parsed);
     };
     reader.readAsText(f);
   });
+
+  function openCsvDialog(parsed){
+    pending = parsed;
+    var dupes = parsed.records.filter(function(r){
+      return state.records.some(function(x){ return sameRec(x, r); });
+    }).length;
+
+    document.getElementById("csvSummary").textContent =
+      "识别到 " + parsed.records.length + " 条记录" + (dupes ? "，其中 " + dupes + " 条已存在" : "");
+
+    document.getElementById("csvPreview").textContent = parsed.records.slice(0, 3).map(function(r){
+      return fmtTime(r.ts) + "  " + r.dataset + " · " + r.metric + "  " +
+        fmtValue(r.value) + (r.unit ? " " + r.unit : "") + (r.note ? "  ｜ " + r.note : "");
+    }).join("\n");
+
+    var d = document.getElementById("csvDialog");
+    if(typeof d.showModal === "function"){ d.showModal(); } else { d.setAttribute("open", ""); }
+  }
+
+  function closeCsvDialog(){
+    var d = document.getElementById("csvDialog");
+    if(typeof d.close === "function"){ d.close(); } else { d.removeAttribute("open"); }
+    pending = null;
+  }
+
+  document.getElementById("csvCancel").addEventListener("click", closeCsvDialog);
+
+  function applyImport(mode){
+    if(!pending) return;
+    var incoming = pending.records.slice();
+
+    if(mode === "append"){
+      incoming = incoming.filter(function(r){
+        return !state.records.some(function(x){ return sameRec(x, r); });
+      });
+      state.records = state.records.concat(incoming);
+      backfill(incoming);
+    }else{
+      state.records = incoming;
+      state.series = state.series.map(function(){ return 0; });
+      if(pending.series){ state.series = pending.series.map(function(v){ return Number(v) || 0; }); }
+      else { backfill(incoming); }
+    }
+
+    save();
+    render(false);
+    closeCsvDialog();
+    document.getElementById("live").textContent = "已导入 " + (mode === "append" ? incoming.length : state.records.length) + " 条记录";
+  }
+
+  document.getElementById("csvAppend").addEventListener("click", function(){ applyImport("append"); });
+  document.getElementById("csvReplace").addEventListener("click", function(){ applyImport("replace"); });
+
+  /* ---------- remote source ---------- */
+  function setSrcUI(){
+    var st = document.getElementById("srcState");
+    var src = state.src;
+    st.textContent = !src ? "未连接" : (src.last ? "已连接" : "待同步");
+    document.getElementById("srcUrl").value = src ? src.url : "";
+    document.getElementById("srcLast").textContent = (src && src.last) ? fmtTime(src.last) : "—";
+    document.getElementById("srcCount").textContent = (src && src.count != null) ? src.count + " 条" : "—";
+  }
+
+  document.getElementById("srcSave").addEventListener("click", function(){
+    var url = document.getElementById("srcUrl").value.trim();
+    if(!url){
+      state.src = null;
+      save(); setSrcUI();
+      document.getElementById("live").textContent = "已断开数据源";
+      return;
+    }
+    if(!/^https?:\/\//i.test(url)){
+      alert("请填完整地址，以 http:// 或 https:// 开头。");
+      return;
+    }
+    state.src = { url: url, last: null, count: null };
+    save(); setSrcUI();
+    syncSource(true);
+  });
+
+  document.getElementById("srcSync").addEventListener("click", function(){ syncSource(true); });
+
+  function syncSource(manual){
+    if(!state.src || !state.src.url){
+      if(manual) alert("先在输入框里填一个数据源地址，再点「保存地址」。");
+      return;
+    }
+    var st = document.getElementById("srcState");
+    st.textContent = "同步中";
+
+    fetch(state.src.url, {cache: "no-store"})
+      .then(function(res){
+        if(!res.ok) throw new Error("HTTP " + res.status);
+        return res.text();
+      })
+      .then(function(text){
+        var parsed = parseAny(text);
+        if(!parsed || !parsed.records.length) throw new Error("内容里没有可用的记录");
+
+        var incoming = parsed.records.filter(function(r){
+          return !state.records.some(function(x){ return sameRec(x, r); });
+        });
+        state.records = state.records.concat(incoming);
+        backfill(incoming);
+
+        state.src.last = Date.now();
+        state.src.count = incoming.length;
+        save(); render(false); setSrcUI();
+        document.getElementById("live").textContent = "已从数据源同步，新增 " + incoming.length + " 条";
+      })
+      .catch(function(err){
+        st.textContent = "同步失败";
+        document.getElementById("live").textContent = "数据源同步失败：" + (err && err.message ? err.message : "未知错误");
+      });
+  }
 
   document.getElementById("clearBtn").addEventListener("click", function(){
     if(!confirm("清空全部记录？趋势也会一起归零。此操作不可撤销。")) return;
@@ -1072,6 +1373,8 @@
   })();
 
   render(false);
+  setSrcUI();
+  if(state.src && state.src.url) syncSource(false);
   var now = new Date();
   sync("ok", "已保存 " + pad(now.getHours()) + ":" + pad(now.getMinutes()));
 })();
