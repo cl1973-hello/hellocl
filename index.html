@@ -505,6 +505,8 @@
   .gate-err{min-height:18px;margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--alert)}
   .gate-err:empty{margin:0;min-height:0}
   .gate-tabs{display:flex;gap:4px;padding:3px;background:var(--rule-soft);border-radius:var(--r-sm);margin:0 0 22px}
+  .gate-hint{margin:-10px 0 18px;font-size:13px;line-height:1.65;color:var(--mute)}
+  .gate-hint[hidden]{display:none}
   .gate-tab{flex:1;height:36px;border:0;border-radius:calc(var(--r-sm) - 2px);background:transparent;font-family:var(--sans);font-size:13.5px;font-weight:600;color:var(--mute);cursor:pointer;transition:background .15s,color .15s,box-shadow .15s}
   .gate-tab:hover{color:var(--ink)}
   .gate-tab.is-on{background:var(--page);color:var(--ink);box-shadow:0 1px 3px rgba(16,24,40,.08)}
@@ -660,7 +662,10 @@
     <div class="gate-tabs" role="tablist" aria-label="登录方式">
       <button class="gate-tab is-on" type="button" id="tabPwd" role="tab" aria-selected="true">密码登录</button>
       <button class="gate-tab" type="button" id="tabOtp" role="tab" aria-selected="false">邮箱验证码</button>
+      <button class="gate-tab" type="button" id="tabReg" role="tab" aria-selected="false">注册</button>
     </div>
+
+    <p class="gate-hint" id="gateHint" hidden>填邮箱 → 点「获取验证码」→ 输入邮件里的数字码，账号就建好了。顺手设个密码，下次不用再等验证码。</p>
 
     <form id="gateForm" novalidate>
       <label class="gate-label" for="gateEmail">邮箱</label>
@@ -1247,25 +1252,37 @@
   function gateVal(id){ return (document.getElementById(id).value || "").trim(); }
   function okMail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
 
+  function submitLabel(m){
+    if(m === "setpwd") return "保存新密码";
+    if(m === "reg") return "创建账号";
+    return "登录";
+  }
+
   function applyMode(m){
     gateMode = m;
-    var pwd = m === "pwd", set = m === "setpwd";
+    var pwd = m === "pwd", set = m === "setpwd", reg = m === "reg";
+    var otpLike = (m === "otp" || reg);
     document.getElementById("rowPwd").hidden = !pwd;
     document.getElementById("rowOtp").hidden = pwd;
-    document.getElementById("rowNewPwd").hidden = (m !== "otp" || !CLOUD.otp || CLOUD.otp.isExistingUser);
+    document.getElementById("rowNewPwd").hidden = !(otpLike && CLOUD.otp && !CLOUD.otp.isExistingUser);
     document.getElementById("rowSetPwd").hidden = !set;
 
     document.getElementById("tabPwd").classList.toggle("is-on", pwd);
     document.getElementById("tabOtp").classList.toggle("is-on", m === "otp");
+    document.getElementById("tabReg").classList.toggle("is-on", reg);
     document.getElementById("tabPwd").setAttribute("aria-selected", pwd ? "true" : "false");
     document.getElementById("tabOtp").setAttribute("aria-selected", m === "otp" ? "true" : "false");
+    document.getElementById("tabReg").setAttribute("aria-selected", reg ? "true" : "false");
     document.getElementById("tabPwd").disabled = set;
     document.getElementById("tabOtp").disabled = set;
+    document.getElementById("tabReg").disabled = set;
 
     document.getElementById("gateSend").textContent = set ? "发送验证码" : "获取验证码";
-    document.getElementById("gateSubmit").textContent = set ? "保存新密码" : "登录";
+    document.getElementById("gateSubmit").textContent = submitLabel(m);
     document.getElementById("gateReset").hidden = set;
     document.getElementById("gateBack").hidden = !set;
+    var hint = document.getElementById("gateHint");
+    if(hint) hint.hidden = !reg;
     gateErr("");
   }
 
@@ -1287,6 +1304,10 @@
         if(res && res.error) throw res.error;
         var d = (res && res.data) || {};
         CLOUD.otp = { email: email, verificationId: d.verificationId, isExistingUser: d.isExistingUser };
+        // 注册页里遇到已有邮箱，直接把人引到登录
+        if(gateMode === "reg" && d.isExistingUser){
+          gateErr("这个邮箱已经注册过，请切到「密码登录」或「邮箱验证码」直接登录。");
+        }
       }
       var left = 60;
       btn.textContent = "已发送";
@@ -1367,8 +1388,12 @@
     }
 
     if(!CLOUD.otp || CLOUD.otp.email !== email){ gateErr("请先点「获取验证码」"); return; }
+    if(gateMode === "reg" && CLOUD.otp.isExistingUser){
+      gateErr("这个邮箱已经注册过，请切到「密码登录」或「邮箱验证码」直接登录。");
+      return;
+    }
     btn.disabled = true;
-    btn.textContent = "登录中…";
+    btn.textContent = gateMode === "reg" ? "创建中…" : "登录中…";
     try{
       var extra = document.getElementById("gateNewPwd").value || "";
       var payload = {
@@ -1383,14 +1408,14 @@
       var s3 = (res2 && res2.data) || null;
       CLOUD.otp = null;
       btn.disabled = false;
-      btn.textContent = "登录";
+      btn.textContent = submitLabel(gateMode);
       if(!s3){ gateErr("登录没有完成，请再试一次"); return; }
       LS.set("hellocl.login.email", email);
       LS.set("hellocl.login.mode", extra ? "pwd" : "otp");
       await enterCloud(s3);
     }catch(e){
       btn.disabled = false;
-      btn.textContent = "登录";
+      btn.textContent = submitLabel(gateMode);
       gateErr(errText(e) || "验证码不正确或已过期");
     }
   }
@@ -2754,6 +2779,7 @@
   });
   document.getElementById("tabPwd").addEventListener("click", function(){ applyMode("pwd"); document.getElementById("gatePwd").focus(); });
   document.getElementById("tabOtp").addEventListener("click", function(){ applyMode("otp"); document.getElementById("gateEmail").focus(); });
+  document.getElementById("tabReg").addEventListener("click", function(){ applyMode("reg"); document.getElementById("gateEmail").focus(); });
   document.getElementById("gateReset").addEventListener("click", function(){
     applyMode("setpwd");
     document.getElementById("gateCode").value = "";
