@@ -493,11 +493,41 @@
     font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;
   }
   .insight-picker select:focus,.freq-tools select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12)}
-  .insight-stack{display:flex;flex-direction:column;gap:22px}
-  .insight-card{padding:24px;gap:20px}
+  .insight-stack{display:flex;flex-direction:column;gap:24px}
+  .insight-card{
+    padding:24px;gap:20px;border-color:#E3E8F1;
+    box-shadow:0 1px 2px rgba(10,13,20,.04),0 14px 32px -24px rgba(10,13,20,.32);
+    transition:box-shadow .24s ease;
+  }
+  .insight-card:hover{box-shadow:0 2px 5px rgba(10,13,20,.05),0 20px 40px -26px rgba(10,13,20,.4)}
   .insight-card .card-head{align-items:flex-start;flex-wrap:wrap}
   .insight-card .card-head h2{font-size:18px}
   .insight-card .card-head p{margin:5px 0 0;font-size:13px;font-weight:400;line-height:1.7;color:var(--mute)}
+
+  /* 卡片头部的折叠按钮 */
+  .card-tools{display:flex;align-items:center;gap:10px;flex:none;margin-left:auto}
+  .fold-btn{
+    display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 13px;
+    border:1px solid var(--rule);border-radius:var(--pill);background:#fff;
+    color:var(--ink-soft);font-family:var(--sans);font-size:12.5px;font-weight:600;letter-spacing:.01em;
+    cursor:pointer;white-space:nowrap;flex:none;
+    transition:background .18s ease,border-color .18s ease,color .18s ease;
+  }
+  .fold-btn:hover{border-color:var(--blue-line);background:var(--blue-soft);color:var(--blue-deep)}
+  .fold-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+  .fold-btn i{width:0;height:0;border-left:4.5px solid transparent;border-right:4.5px solid transparent;border-top:5px solid currentColor;transition:transform .26s ease}
+  .fold-btn[aria-expanded="true"] i{transform:rotate(180deg)}
+
+  /* 可滚动列表：默认只露出约 8 行，余下滚动查看 */
+  .list-scroll{
+    max-height:330px;overflow:auto;overscroll-behavior:contain;
+    padding-right:12px;margin-right:-4px;
+    scrollbar-width:thin;scrollbar-color:#CBD5E5 transparent;
+  }
+  .list-scroll::-webkit-scrollbar{width:8px}
+  .list-scroll::-webkit-scrollbar-thumb{background:#D3DCE9;border-radius:99px}
+  .list-scroll::-webkit-scrollbar-thumb:hover{background:#BEC9DA}
+  .list-scroll.is-open{max-height:min(74vh,1600px)}
   .insight-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--rule);border-radius:var(--r-md);overflow:hidden}
   .insight-stat{padding:18px 20px;background:#FAFBFE}
   .insight-stat + .insight-stat{border-left:1px solid var(--rule)}
@@ -513,6 +543,35 @@
   .bar-track i{display:block;height:100%;min-width:2px;border-radius:var(--pill);background:var(--blue);transform-origin:left;animation:insightBar .45s cubic-bezier(.22,.61,.36,1) both}
   .bar-value{text-align:right;font-family:var(--mono);font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums;white-space:nowrap}
   @keyframes insightBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+  /* 垂直柱状图：高频值 */
+  .col-chart{display:flex;align-items:stretch;gap:9px;height:246px;padding:0 2px;border-bottom:1px solid var(--rule-soft)}
+  .col-item{flex:1 1 0;min-width:46px;display:flex;flex-direction:column;gap:7px}
+  .col-track{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px}
+  .col-track em{font-family:var(--mono);font-size:11px;font-style:normal;font-weight:500;color:var(--mute);line-height:1;font-variant-numeric:tabular-nums}
+  .col-track i{
+    display:block;width:100%;max-width:46px;min-height:4px;border-radius:8px 8px 2px 2px;
+    background:linear-gradient(180deg,#7EB0FF,#2563EB);
+    transform-origin:bottom;animation:colGrow .52s cubic-bezier(.22,.61,.36,1) both;
+  }
+  .col-item b{
+    display:block;font-family:var(--sans);font-size:11.5px;font-weight:600;line-height:1.7;
+    color:var(--ink-soft);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  @keyframes colGrow{from{transform:scaleY(.02);opacity:.5}to{transform:scaleY(1);opacity:1}}
+
+  /* 双色占比条：缺失情况 */
+  .ratio-row{grid-template-columns:minmax(110px,1fr) minmax(140px,2.1fr) 108px}
+  .ratio-track{height:12px;border-radius:6px;background:#FBEAC0;overflow:hidden;min-width:0}
+  .ratio-track i{
+    display:block;height:100%;border-radius:6px 0 0 6px;
+    background:linear-gradient(90deg,#7EB0FF,#2563EB);
+    transform-origin:left;animation:insightBar .45s cubic-bezier(.22,.61,.36,1) both;
+  }
+  .bar-value.is-bad{color:#B45309}
+  .ratio-legend{display:flex;align-items:center;gap:18px;margin:-8px 0 0;font-size:12px;color:var(--mute)}
+  .ratio-legend span{display:inline-flex;align-items:center;gap:6px}
+  .ratio-legend i{width:10px;height:10px;border-radius:3px}
   .type-layout{display:grid;grid-template-columns:190px minmax(0,1fr);align-items:center;gap:30px}
   .type-chart{width:180px;height:180px;margin:0}
   .type-chart svg{display:block;width:180px;height:180px}
@@ -522,6 +581,11 @@
   .type-item span{font-size:13px;color:var(--mute)}
   .type-item b{margin-left:auto;font-family:var(--mono);font-size:13px;color:var(--ink)}
   .field-table-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:var(--r-md)}
+  .field-table-wrap.is-clip{max-height:330px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#CBD5E5 transparent}
+  .field-table-wrap.is-clip.is-open{max-height:none}
+  .field-table-wrap.is-clip::-webkit-scrollbar{width:8px;height:8px}
+  .field-table-wrap.is-clip::-webkit-scrollbar-thumb{background:#D3DCE9;border-radius:99px}
+  .field-table-wrap.is-clip thead th{position:sticky;top:0;z-index:1;box-shadow:inset 0 -1px 0 var(--rule)}
   .field-table{min-width:650px;table-layout:auto}
   .field-table th{padding:12px 14px;background:#FAFBFE;white-space:nowrap}
   .field-table td{height:50px;padding:0 14px;white-space:nowrap}
@@ -532,9 +596,8 @@
   .type-badge[data-type="date"]{background:#ECFEFF;color:#0E7490}
   .type-badge[data-type="boolean"]{background:#FFFBEB;color:#92400E}
   .type-badge[data-type="empty"]{background:#F8FAFC;color:#64748B}
-  .freq-tools{display:flex;align-items:center;gap:10px}
-  .freq-tools select{max-width:260px;min-height:40px;font-size:13px}
-  .insight-toggle{align-self:flex-start;min-height:40px}
+  .freq-tools{display:flex;align-items:center;gap:10px;flex:none}
+  .freq-tools select{max-width:230px;min-height:36px;font-size:13px}
   .insight-empty{padding:52px 24px;text-align:center;border:1px dashed var(--rule);border-radius:var(--r-lg);background:#FAFBFE}
   .insight-empty strong{display:block;font-size:17px;color:var(--ink);margin-bottom:7px}
   .insight-empty p{margin:0;color:var(--mute);font-size:14px}
@@ -731,8 +794,15 @@
     .type-legend{width:100%}
     .bar-row{grid-template-columns:minmax(90px,1fr) minmax(70px,1.2fr) 70px;gap:9px}
     .bar-value{font-size:11px}
-    .freq-tools{width:100%}
-    .freq-tools select{max-width:none;width:100%}
+    .freq-tools{width:100%;flex-wrap:wrap}
+    .freq-tools select{flex:1 1 150px;max-width:none;width:auto;min-width:0}
+    .card-tools{margin-left:0}
+    .fold-btn{min-height:36px}
+    .col-chart{height:198px;gap:6px}
+    .col-item b{font-size:10.5px}
+    .col-track em{font-size:10px}
+    .ratio-track{height:11px}
+    .list-scroll{max-height:302px}
     .file-table .c-time,.file-table .c-size{display:none}
     .file-table .c-rows{width:58px}
     .file-table .c-act{width:154px}
@@ -1684,6 +1754,8 @@
   var insightField = 0;
   var insightFreqExpanded = false;
   var insightFilesExpanded = false;
+  var insightFieldsExpanded = false;
+  var insightMissingExpanded = false;
   var insightToken = 0;
   var insightProfile = null;
   var profileCache = {};
@@ -2229,7 +2301,7 @@
       else if(numeric / nonempty >= 0.8) type = "numeric";
       else if(dates / nonempty >= 0.8) type = "date";
       var values = Object.keys(freq).map(function(value){ return { value: value, count: freq[value] }; });
-      values.sort(function(a, b){ return b.count - a.count || a.value.localeCompare(b.value, "zh-CN"); });
+      values.sort(function(a, b){ return b.count - a.count || a.value.localeCompare(b.value, "zh-CN", { numeric: true }); });
       return {
         name: name, type: type, missing: missing, nonempty: nonempty,
         unique: Object.keys(unique).length, values: values
@@ -2664,6 +2736,12 @@
     empty: { label: "空字段", color: "#D8DEE9" }
   };
 
+  /* 卡片头部的折叠按钮：默认只看前 10 条 */
+  function foldBtn(attr, expanded, total, unit){
+    return '<button class="fold-btn" type="button" ' + attr + ' aria-expanded="' + (expanded ? "true" : "false") + '">' +
+      (expanded ? "收起" : "展开 " + nf(total) + (unit || "")) + '<i aria-hidden="true"></i></button>';
+  }
+
   function insightRankCard(){
     var ranked = files.slice().sort(function(a, b){ return (b.rows || 0) - (a.rows || 0); });
     var shown = insightFilesExpanded ? ranked : ranked.slice(0, 10);
@@ -2678,10 +2756,12 @@
       ? '「' + esc(ranked[0].name) + '」的数据最多，共 ' + nf(ranked[0].rows) + ' 条。'
       : "暂时还没有可比较的数据量。";
     return '<section class="card insight-card" id="insightRank">' +
-      '<div class="card-head"><div><h2>文件数据量排行</h2><p>按每个文件包含的数据条数从高到低排列</p></div><span class="num">' + files.length + ' 个文件</span></div>' +
-      '<p class="insight-story">' + lead + '</p><div class="rank-list">' + rows + '</div>' +
-      (ranked.length > 10 ? '<button class="btn insight-toggle" type="button" data-insight-files aria-expanded="' + insightFilesExpanded + '">' +
-        (insightFilesExpanded ? '收起，只看前 10 个' : '展开全部 ' + ranked.length + ' 个文件') + '</button>' : '') +
+      '<div class="card-head"><div><h2>文件数据量排行</h2><p>按每个文件包含的数据条数从高到低排列，默认显示前 10 个</p></div>' +
+      '<div class="card-tools"><span class="num">' + files.length + ' 个</span>' +
+      (ranked.length > 10 ? foldBtn("data-insight-files", insightFilesExpanded, ranked.length, " 个") : "") +
+      '</div></div>' +
+      '<p class="insight-story">' + lead + '</p>' +
+      '<div class="list-scroll' + (insightFilesExpanded ? " is-open" : "") + '"><div class="rank-list">' + rows + '</div></div>' +
       '</section>';
   }
 
@@ -2718,14 +2798,21 @@
   }
 
   function insightFieldsCard(p){
-    var rows = p.fields.map(function(f, i){
-      return '<tr><td><button class="field-pick" type="button" data-insight-field="' + i + '" aria-pressed="' + (i === insightField) + '" title="查看 ' + esc(f.name) + ' 的高频值">' + esc(f.name) + '</button></td>' +
+    var shown = insightFieldsExpanded ? p.fields : p.fields.slice(0, 10);
+    var rows = shown.map(function(f, i){
+      var idx = p.fields.indexOf(f);
+      return '<tr><td><button class="field-pick" type="button" data-insight-field="' + idx + '" aria-pressed="' + (idx === insightField) + '" title="查看 ' + esc(f.name) + ' 的高频值">' + esc(f.name) + '</button></td>' +
         '<td><span class="type-badge" data-type="' + f.type + '">' + TYPE_META[f.type].label + '</span></td>' +
         '<td><span class="cell-num">' + nf(f.nonempty) + '</span></td><td><span class="cell-num">' + nf(f.missing) + '</span></td>' +
         '<td><span class="cell-num">' + nf(f.unique) + '</span></td></tr>';
     }).join("");
-    return '<section class="card insight-card" id="insightFields"><div class="card-head"><div><h2>字段明细</h2><p>点字段名，可以在下方切换它的「高频值」统计</p></div><span class="num">' + p.cols + ' 列</span></div>' +
-      '<div class="field-table-wrap"><table class="field-table"><caption>各字段的类型与数据质量</caption><thead><tr><th>字段</th><th>类型</th><th>非空</th><th>缺失</th><th>唯一值</th></tr></thead><tbody>' + rows + '</tbody></table></div></section>';
+    var clip = p.fields.length > 10;
+    return '<section class="card insight-card" id="insightFields"><div class="card-head"><div><h2>字段明细</h2><p>点字段名，可以在下方切换它的「高频值」统计' + (clip ? '；默认显示前 10 列' : '') + '</p></div>' +
+      '<div class="card-tools"><span class="num">' + p.cols + ' 列</span>' +
+      (clip ? foldBtn("data-insight-fields", insightFieldsExpanded, p.fields.length, " 列") : "") +
+      '</div></div>' +
+      '<div class="field-table-wrap' + (clip ? " is-clip" : "") + (clip && insightFieldsExpanded ? " is-open" : "") + '">' +
+      '<table class="field-table"><caption>各字段的类型与数据质量</caption><thead><tr><th>字段</th><th>类型</th><th>非空</th><th>缺失</th><th>唯一值</th></tr></thead><tbody>' + rows + '</tbody></table></div></section>';
   }
 
   function insightFrequencyCard(p){
@@ -2737,38 +2824,48 @@
     }).join("");
     var values = insightFreqExpanded ? field.values : field.values.slice(0, 10);
     var max = values.length ? values[0].count : 1;
-    var list = values.map(function(v){
+    var cols = values.map(function(v){
       var pct = field.nonempty ? v.count / field.nonempty * 100 : 0;
-      return '<div class="bar-row"><span class="bar-label" title="' + esc(v.value) + '">' + esc(v.value) + '</span>' +
-        '<span class="bar-track"><i style="width:' + Math.max(1, v.count / max * 100).toFixed(1) + '%"></i></span>' +
-        '<span class="bar-value">' + nf(v.count) + ' 次 · ' + pct.toFixed(1) + '%</span></div>';
+      var h = Math.max(4, v.count / max * 100);
+      return '<div class="col-item" title="' + esc(v.value) + '：' + nf(v.count) + ' 次 · ' + pct.toFixed(1) + '%">' +
+        '<span class="col-track"><em>' + nf(v.count) + '</em>' +
+        '<i style="height:' + h.toFixed(1) + '%"></i></span>' +
+        '<b>' + esc(v.value) + '</b></div>';
     }).join("");
     var story = field.values.length
       ? '字段「' + esc(field.name) + '」里，「' + esc(field.values[0].value) + '」出现最多：' + nf(field.values[0].count) + ' 次，占非空数据的 ' +
         (field.nonempty ? (field.values[0].count / field.nonempty * 100).toFixed(1) : "0.0") + '%。'
       : '字段「' + esc(field.name) + '」没有非空值，暂时没有频次可统计。';
-    return '<section class="card insight-card" id="insightFrequency"><div class="card-head"><div><h2>高频值 Top 10</h2><p>同一值出现得越多，横条越长；百分比以该字段非空数据为基数</p></div>' +
-      '<div class="freq-tools"><label class="sr" for="insightFieldSelect">选择字段</label><select id="insightFieldSelect">' + options + '</select></div></div>' +
+    var more = field.values.length > 10;
+    return '<section class="card insight-card" id="insightFrequency"><div class="card-head"><div><h2>高频值排行</h2><p>柱子越高出现越多，柱顶是次数；百分比以该字段非空数据为基数' + (more ? '，默认显示前 10 项' : '') + '</p></div>' +
+      '<div class="freq-tools"><label class="sr" for="insightFieldSelect">选择字段</label><select id="insightFieldSelect">' + options + '</select>' +
+      (more ? foldBtn("data-insight-freq", insightFreqExpanded, field.values.length, " 项") : "") + '</div></div>' +
       '<p class="insight-story">' + story + '</p>' +
-      (list ? '<div class="freq-list">' + list + '</div>' : '<div class="insight-empty"><strong>这一列全是空值</strong><p>换一列看看，或回到字段明细检查缺失情况。</p></div>') +
-      (field.values.length > 10 ? '<button class="btn insight-toggle" type="button" data-insight-freq aria-expanded="' + insightFreqExpanded + '">' +
-        (insightFreqExpanded ? '收起，只看前 10 项' : '展开全部 ' + field.values.length + ' 项') + '</button>' : '') + '</section>';
+      (cols ? '<div class="list-scroll' + (insightFreqExpanded ? " is-open" : "") + '"><div class="col-chart">' + cols + '</div></div>' :
+        '<div class="insight-empty"><strong>这一列全是空值</strong><p>换一列看看，或回到字段明细检查缺失情况。</p></div>') +
+      '</section>';
   }
 
   function insightMissingCard(p){
     var sorted = p.fields.slice().sort(function(a, b){ return b.missing - a.missing; });
-    var maxPct = p.rows ? Math.max.apply(null, sorted.map(function(f){ return f.missing / p.rows * 100; }).concat([1])) : 1;
-    var list = sorted.map(function(f){
+    var shown = insightMissingExpanded ? sorted : sorted.slice(0, 10);
+    var list = shown.map(function(f){
       var pct = p.rows ? f.missing / p.rows * 100 : 0;
-      return '<div class="bar-row"><span class="bar-label" title="' + esc(f.name) + '">' + esc(f.name) + '</span>' +
-        '<span class="bar-track"><i style="width:' + (pct ? Math.max(1, pct) : 0).toFixed(1) + '%;background:' + (pct ? '#60A5FA' : '#D8DEE9') + '"></i></span>' +
-        '<span class="bar-value">' + nf(f.missing) + ' · ' + pct.toFixed(1) + '%</span></div>';
+      return '<div class="bar-row ratio-row"><span class="bar-label" title="' + esc(f.name) + '">' + esc(f.name) + '</span>' +
+        '<span class="ratio-track"><i style="width:' + Math.min(100, Math.max(0, 100 - pct)).toFixed(1) + '%"></i></span>' +
+        '<span class="bar-value' + (pct ? " is-bad" : "") + '">' + (pct ? pct.toFixed(1) + "% 缺失" : "完整") + '</span></div>';
     }).join("");
     var story = p.complete + ' / ' + p.cols + ' 个字段没有缺失。';
     if(sorted.length && sorted[0].missing) story += '「' + esc(sorted[0].name) + '」缺失最多，共 ' + nf(sorted[0].missing) + ' 个空值。';
     else story += '所有字段都填满了，这份数据的完整性很好。';
-    return '<section class="card insight-card" id="insightMissing"><div class="card-head"><div><h2>缺失情况</h2><p>空字符串、空白单元格与 JSON 空值都计为缺失</p></div><span class="num">' + nf(p.missingCells) + ' 个空值</span></div>' +
-      '<p class="insight-story">' + story + '</p><div class="missing-list">' + list + '</div></section>';
+    var more = sorted.length > 10;
+    return '<section class="card insight-card" id="insightMissing"><div class="card-head"><div><h2>缺失情况</h2><p>空字符串、空白单元格与 JSON 空值都计为缺失；蓝条是该字段的完整比例' + (more ? '，默认显示前 10 列' : '') + '</p></div>' +
+      '<div class="card-tools"><span class="num">' + nf(p.missingCells) + ' 个空值</span>' +
+      (more ? foldBtn("data-insight-missing", insightMissingExpanded, sorted.length, " 列") : "") +
+      '</div></div>' +
+      '<p class="insight-story">' + story + '</p>' +
+      '<div class="ratio-legend"><span><i style="background:linear-gradient(90deg,#7EB0FF,#2563EB)"></i>有数据</span><span><i style="background:#FBEAC0"></i>缺失</span></div>' +
+      '<div class="list-scroll' + (insightMissingExpanded ? " is-open" : "") + '"><div class="missing-list">' + list + '</div></div></section>';
   }
 
   function renderInsightData(f, p){
@@ -3077,6 +3174,8 @@
     insightFileId = e.target.value;
     insightField = 0;
     insightFreqExpanded = false;
+    insightFieldsExpanded = false;
+    insightMissingExpanded = false;
     insightProfile = null;
     drawInsight();
   });
@@ -3089,10 +3188,21 @@
       live("已切换高频值字段");
       return;
     }
-    var freq = e.target.closest("[data-insight-freq]");
-    if(freq){ insightFreqExpanded = !insightFreqExpanded; drawInsight(); return; }
-    var rank = e.target.closest("[data-insight-files]");
-    if(rank){ insightFilesExpanded = !insightFilesExpanded; drawInsight(); }
+    var fold = e.target.closest("[data-insight-freq],[data-insight-files],[data-insight-fields],[data-insight-missing]");
+    if(!fold) return;
+    var attr = "";
+    if(fold.hasAttribute("data-insight-freq")){ insightFreqExpanded = !insightFreqExpanded; attr = "data-insight-freq"; }
+    else if(fold.hasAttribute("data-insight-files")){ insightFilesExpanded = !insightFilesExpanded; attr = "data-insight-files"; }
+    else if(fold.hasAttribute("data-insight-fields")){ insightFieldsExpanded = !insightFieldsExpanded; attr = "data-insight-fields"; }
+    else { insightMissingExpanded = !insightMissingExpanded; attr = "data-insight-missing"; }
+    drawInsight();
+    var again = document.querySelector('#insightContent [' + attr + ']');
+    if(again){
+      again.focus({ preventScroll: true });
+      var card = again.closest(".insight-card");
+      if(card && card.scrollIntoView) card.scrollIntoView({ block: "nearest" });
+      live(again.getAttribute("aria-expanded") === "true" ? "已展开全部" : "已收起，只看前 10 条");
+    }
   });
   document.getElementById("insightContent").addEventListener("change", function(e){
     if(e.target.id !== "insightFieldSelect") return;
