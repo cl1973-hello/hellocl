@@ -451,6 +451,97 @@
   .act button:hover{color:var(--blue);background:var(--blue-soft)}
   .act button[data-kill]:hover{color:var(--alert);background:var(--alert-soft)}
 
+  /* 数据表里的主要操作始终可见，不用悬停找按钮 */
+  .file-table .c-act{width:198px;text-align:right}
+  .file-table .act{opacity:1;gap:8px}
+  .file-table .act button{
+    min-width:82px;height:44px;padding:0 13px;
+    border:1px solid var(--rule);background:#fff;color:var(--ink-soft);
+    font-family:var(--sans);font-size:13px;font-weight:600;line-height:1;
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  }
+  .file-table .act button[data-dl]{color:var(--blue-deep);background:var(--blue-soft);border-color:var(--blue-line)}
+  .file-table .act button[data-dl]:hover{color:#fff;background:var(--blue);border-color:var(--blue)}
+  .file-table .act button[data-kill]{color:var(--alert);background:#fff;border-color:#F2C9C9}
+  .file-table .act button[data-kill]:hover{color:#B91C1C;background:var(--alert-soft);border-color:#E9AAAA}
+
+  /* ---------- 文件搜索 ---------- */
+  .nav-search{position:relative;width:204px;flex:0 1 204px;min-width:140px}
+  .nav-search > svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--mute-2);pointer-events:none}
+  .nav-search input{
+    width:100%;height:38px;border:1px solid var(--rule);border-radius:var(--pill);
+    background:#F7F9FC;color:var(--ink);font-family:var(--sans);font-size:13px;font-weight:500;
+    padding:0 34px 0 34px;outline:none;
+    transition:border-color .18s ease,box-shadow .18s ease,background .18s ease;
+  }
+  .nav-search input::placeholder{color:var(--mute-2)}
+  .nav-search input:focus{background:#fff;border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12)}
+  .search-clear{
+    position:absolute;right:5px;top:50%;transform:translateY(-50%);
+    width:30px;height:30px;border:0;border-radius:50%;background:transparent;color:var(--mute);
+    font-family:var(--sans);font-size:17px;line-height:1;cursor:pointer;
+  }
+  .search-clear:hover{background:var(--rule-soft);color:var(--ink)}
+  .search-clear[hidden]{display:none}
+
+  /* ---------- 数据洞察 ---------- */
+  .insight-picker{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+  .insight-picker label{font-size:13px;font-weight:600;color:var(--ink-soft)}
+  .insight-picker select,.freq-tools select{
+    min-height:44px;max-width:min(440px,100%);padding:0 38px 0 13px;
+    border:1px solid var(--rule);border-radius:var(--r-sm);background:#F7F9FC;color:var(--ink);
+    font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;
+  }
+  .insight-picker select:focus,.freq-tools select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12)}
+  .insight-stack{display:flex;flex-direction:column;gap:22px}
+  .insight-card{padding:24px;gap:20px}
+  .insight-card .card-head{align-items:flex-start;flex-wrap:wrap}
+  .insight-card .card-head h2{font-size:18px}
+  .insight-card .card-head p{margin:5px 0 0;font-size:13px;font-weight:400;line-height:1.7;color:var(--mute)}
+  .insight-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--rule);border-radius:var(--r-md);overflow:hidden}
+  .insight-stat{padding:18px 20px;background:#FAFBFE}
+  .insight-stat + .insight-stat{border-left:1px solid var(--rule)}
+  .insight-stat span{display:block;font-size:12px;font-weight:500;color:var(--mute);margin-bottom:5px}
+  .insight-stat b{display:block;font-family:var(--mono);font-size:26px;line-height:1.2;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis}
+  .insight-stat b em{font-family:var(--sans);font-size:12px;font-style:normal;font-weight:500;color:var(--mute);margin-left:5px}
+  .insight-story{margin:0;padding:14px 16px;border-left:3px solid var(--blue);background:var(--blue-soft);border-radius:0 var(--r-sm) var(--r-sm) 0;color:var(--ink-soft);font-size:14px;line-height:1.8}
+  .insight-source{margin:-6px 0 0;font-size:12px;color:var(--mute-2)}
+  .rank-list,.freq-list,.missing-list{display:flex;flex-direction:column;gap:13px}
+  .bar-row{display:grid;grid-template-columns:minmax(120px,1.15fr) minmax(160px,2.4fr) 92px;align-items:center;gap:14px;min-height:26px}
+  .bar-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px;font-weight:500;color:var(--ink-soft)}
+  .bar-track{height:9px;border-radius:var(--pill);background:var(--rule-soft);overflow:hidden}
+  .bar-track i{display:block;height:100%;min-width:2px;border-radius:var(--pill);background:var(--blue);transform-origin:left;animation:insightBar .45s cubic-bezier(.22,.61,.36,1) both}
+  .bar-value{text-align:right;font-family:var(--mono);font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums;white-space:nowrap}
+  @keyframes insightBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  .type-layout{display:grid;grid-template-columns:190px minmax(0,1fr);align-items:center;gap:30px}
+  .type-chart{width:180px;height:180px;margin:0}
+  .type-chart svg{display:block;width:180px;height:180px}
+  .type-legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .type-item{display:flex;align-items:center;gap:10px;padding:12px 13px;border:1px solid var(--rule-soft);border-radius:var(--r-sm)}
+  .type-item i{width:10px;height:10px;border-radius:3px;flex:none}
+  .type-item span{font-size:13px;color:var(--mute)}
+  .type-item b{margin-left:auto;font-family:var(--mono);font-size:13px;color:var(--ink)}
+  .field-table-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:var(--r-md)}
+  .field-table{min-width:650px;table-layout:auto}
+  .field-table th{padding:12px 14px;background:#FAFBFE;white-space:nowrap}
+  .field-table td{height:50px;padding:0 14px;white-space:nowrap}
+  .field-pick{border:0;background:transparent;padding:7px 0;color:var(--ink);font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;text-align:left;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .field-pick:hover,.field-pick[aria-pressed="true"]{color:var(--blue)}
+  .type-badge{display:inline-flex;align-items:center;min-height:26px;padding:3px 9px;border-radius:var(--pill);background:var(--blue-soft);color:var(--blue-deep);font-size:12px;font-weight:600}
+  .type-badge[data-type="text"]{background:#F1F5F9;color:#475569}
+  .type-badge[data-type="date"]{background:#ECFEFF;color:#0E7490}
+  .type-badge[data-type="boolean"]{background:#FFFBEB;color:#92400E}
+  .type-badge[data-type="empty"]{background:#F8FAFC;color:#64748B}
+  .freq-tools{display:flex;align-items:center;gap:10px}
+  .freq-tools select{max-width:260px;min-height:40px;font-size:13px}
+  .insight-toggle{align-self:flex-start;min-height:40px}
+  .insight-empty{padding:52px 24px;text-align:center;border:1px dashed var(--rule);border-radius:var(--r-lg);background:#FAFBFE}
+  .insight-empty strong{display:block;font-size:17px;color:var(--ink);margin-bottom:7px}
+  .insight-empty p{margin:0;color:var(--mute);font-size:14px}
+  .insight-loading{display:flex;align-items:center;gap:10px;color:var(--mute);font-size:14px}
+  .insight-loading i{width:15px;height:15px;border:2px solid var(--blue-line);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
   /* ---------- storage ---------- */
   .store-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:22px;align-items:start}
   .donut-wrap{display:flex;align-items:center;gap:34px;flex-wrap:wrap}
@@ -535,11 +626,20 @@
   @media (max-width:760px){ .who-in{padding:0 10px;font-size:12.5px} }
 
   /* ---------- responsive ---------- */
+  @media (max-width:1280px){
+    .bar-in{gap:20px}
+    .nav-search{width:170px;flex-basis:170px}
+    .bar-right{gap:14px}
+  }
   @media (max-width:1120px){
     :root{--pad:28px;--rail:300px;--gap:32px}
     .pane.is-on{grid-template-columns:minmax(0,1fr);gap:34px}
     .rail{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
     .note{grid-column:1 / -1}
+    .nav-search{width:150px;flex-basis:150px;min-width:120px}
+    .insight-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .insight-stat:nth-child(3){border-left:0;border-top:1px solid var(--rule)}
+    .insight-stat:nth-child(4){border-top:1px solid var(--rule)}
   }
   @media (max-width:880px){
     .stamp{display:none}
@@ -621,6 +721,29 @@
     .prev-wrap{padding:12px 14px 14px}
     .page-head h1{font-size:25px}
     .act{opacity:1}
+    .nav-search{order:4;width:100%;flex:1 0 100%;max-width:none}
+    .nav-search input{height:42px}
+    .insight-card{padding:18px;gap:17px}
+    .insight-summary{grid-template-columns:1fr 1fr}
+    .insight-stat{padding:14px}
+    .insight-stat b{font-size:22px}
+    .type-layout{grid-template-columns:1fr;justify-items:center;gap:20px}
+    .type-legend{width:100%}
+    .bar-row{grid-template-columns:minmax(90px,1fr) minmax(70px,1.2fr) 70px;gap:9px}
+    .bar-value{font-size:11px}
+    .freq-tools{width:100%}
+    .freq-tools select{max-width:none;width:100%}
+    .file-table .c-time,.file-table .c-size{display:none}
+    .file-table .c-rows{width:58px}
+    .file-table .c-act{width:154px}
+    .file-table .act{gap:6px}
+    .file-table .act button{min-width:68px;height:44px;padding:0 8px;font-size:12.5px}
+    td.c-rows{padding-right:8px}
+  }
+  @media (max-width:390px){
+    .file-table .c-act{width:142px}
+    .file-table .act button{min-width:62px;padding:0 6px}
+    .type-legend{grid-template-columns:1fr}
   }
   @media (prefers-reduced-motion:reduce){
     *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
@@ -634,10 +757,16 @@
     <a class="mark" href="#overview" aria-label="hellocl 首页">hello<b>cl</b></a>
     <nav class="nav" aria-label="主导航">
       <a href="#overview" data-nav="overview" aria-current="page">概览</a>
+      <a href="#insight" data-nav="insight">洞察</a>
       <a href="#data" data-nav="data">数据表</a>
       <a href="#storage" data-nav="storage">存储</a>
       <a href="#about" data-nav="about">关于</a>
     </nav>
+    <div class="nav-search" role="search">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.7"/><path d="m13 13 3.5 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      <input type="search" id="fileSearch" autocomplete="off" placeholder="搜索文件名…" aria-label="搜索已上传的文件" title="按文件名或格式搜索；按 / 快速聚焦，Esc 清空">
+      <button class="search-clear" type="button" id="searchClear" aria-label="清空文件搜索" title="清空搜索" hidden>×</button>
+    </div>
     <div class="bar-right">
       <span class="stamp" id="stamp">2026.11.06 · FRI</span>
       <span class="sync" id="sync" data-state="ok"><i aria-hidden="true"></i><span id="syncText">已保存</span></span>
@@ -822,6 +951,19 @@
     </aside>
   </section>
 
+  <!-- ============ 数据洞察 ============ -->
+  <section class="pane solo" id="pane-insight" aria-label="数据洞察">
+    <div class="page-head">
+      <h1>数据洞察</h1>
+      <p>选一个文件，看清它有几行几列、每列是什么类型、缺失了多少，以及哪些值出现得最多。图表之外，也给你一句能直接读懂的结论。</p>
+    </div>
+    <div class="insight-picker" id="insightPicker">
+      <label for="insightFile">正在分析</label>
+      <select id="insightFile" aria-label="选择要分析的文件"></select>
+    </div>
+    <div class="insight-stack" id="insightContent" aria-live="polite"></div>
+  </section>
+
   <!-- ============ 数据表 ============ -->
   <section class="pane solo" id="pane-data" aria-label="数据表">
     <div class="page-head">
@@ -836,6 +978,7 @@
 
     <div class="files-bar">
       <span id="filesMeta">共 0 个文件</span>
+      <span id="searchMeta" class="sr" role="status" aria-live="polite"></span>
       <button class="btn btn-pending" type="button" id="syncPending" hidden>同步到云端</button>
     </div>
 
@@ -928,6 +1071,7 @@
           <li>清除浏览器数据（或使用无痕窗口）会连同文件一起删除，无法找回。</li>
           <li>建议把重要文件在「数据表」里下载一份，别只留在这里。</li>
           <li>Excel 支持 .xlsx 全量解析；旧版 .xls 能保存原文件，但无法统计行数，会显示为「—」。</li>
+          <li><b>特别声明</b>该网站云服务存储为个人库，网站维护看个人心情！</li>
         </ul>
       </div>
 
@@ -935,7 +1079,7 @@
         <div class="card">
           <div class="card-head">
             <h2>版本</h2>
-            <span class="num">v2.1</span>
+            <span class="num">v2.2</span>
           </div>
           <div class="kv">
             <div><span>更新</span><b>2026.11</b></div>
@@ -972,7 +1116,7 @@
 <footer class="foot">
   <span>hellocl.app.workbuddy.host</span>
   <span class="claim">数据归你 · 不追踪</span>
-  <span>v2.1 · 2026</span>
+  <span>v2.2 · 2026</span>
 </footer>
 
 <div class="veil" id="veil" aria-hidden="true"><span>松手上传 · CSV / Excel / JSON</span></div>
@@ -1535,6 +1679,14 @@
   var DS_SHUT = 4;
   var displayed = 0;
   var quota = null;
+  var fileQuery = "";
+  var insightFileId = "";
+  var insightField = 0;
+  var insightFreqExpanded = false;
+  var insightFilesExpanded = false;
+  var insightToken = 0;
+  var insightProfile = null;
+  var profileCache = {};
 
   /* ================= 基础工具 ================= */
 
@@ -1980,6 +2132,140 @@
       });
   }
 
+  /* ================= 完整文件剖析（供「洞察」使用） ================= */
+
+  function normalizeMatrix(head, data){
+    var cols = head ? head.length : 0;
+    data.forEach(function(r){ if(r && r.length > cols) cols = r.length; });
+    if(!cols && data.length) cols = 1;
+    var headers = [];
+    for(var i = 0; i < cols; i++){
+      var h = head && head[i] != null ? String(head[i]).trim() : "";
+      headers.push(h || ("列 " + (i + 1)));
+    }
+    return { headers: headers, rows: data || [] };
+  }
+
+  function matrixCSV(buf){
+    var text = new TextDecoder("utf-8").decode(buf);
+    if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    var rows = parseCSV(text);
+    var head = hasHeader(rows) ? rows[0] : null;
+    return normalizeMatrix(head, head ? rows.slice(1) : rows);
+  }
+
+  function matrixJSON(buf){
+    var text = new TextDecoder("utf-8").decode(buf);
+    if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    var data;
+    try{ data = JSON.parse(text); }
+    catch(e){
+      var objs = [], lines = text.split(/\r?\n/);
+      for(var i = 0; i < lines.length; i++){
+        var ln = lines[i].trim();
+        if(!ln) continue;
+        try{ objs.push(JSON.parse(ln)); }catch(e2){ /* 与上传解析一致，略过坏行 */ }
+      }
+      if(!objs.length) throw new Error("JSON 结构无法识别");
+      data = objs;
+    }
+    var list = Array.isArray(data) ? data : (data && typeof data === "object" ? firstArrayList(data) : null);
+    if(!list) list = (data && typeof data === "object") ? [data] : [];
+    var keys = [], seen = {};
+    list.forEach(function(it){
+      if(it && typeof it === "object" && !Array.isArray(it)){
+        Object.keys(it).forEach(function(k){ if(!seen[k]){ seen[k] = 1; keys.push(k); } });
+      }
+    });
+    if(!keys.length) return normalizeMatrix(null, list.map(function(it){ return [cellText(it)]; }));
+    return normalizeMatrix(keys, list.map(function(it){
+      return keys.map(function(k){ return cellText(it && typeof it === "object" ? it[k] : ""); });
+    }));
+  }
+
+  async function matrixXL(buf, ext){
+    if(ext === "xls") throw new Error("旧版 .xls 是二进制格式，暂时只能保存和下载，不能生成字段统计。");
+    var sheet = await unzipEntry(buf, function(n){ return /^xl\/worksheets\/sheet1\.xml$/.test(n); });
+    if(!sheet) sheet = await unzipEntry(buf, function(n){ return /^xl\/worksheets\/sheet\d+\.xml$/.test(n); });
+    if(!sheet) throw new Error("没有找到可分析的工作表");
+    var sharedXml = await unzipEntry(buf, function(n){ return /^xl\/sharedStrings\.xml$/.test(n); });
+    var shared = sharedXml ? sharedStrings(sharedXml) : [];
+    var rows = [], re = /<row[^>]*?(?:\/>|>([\s\S]*?)<\/row>)/g, m;
+    while((m = re.exec(sheet))) rows.push(parseRowXml(m[1] || "", shared));
+    var head = hasHeader(rows) ? rows[0] : null;
+    return normalizeMatrix(head, head ? rows.slice(1) : rows);
+  }
+
+  function isDateCell(v){
+    var s = String(v == null ? "" : v).trim();
+    if(!s) return false;
+    if(!/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}(?:[T\s].*)?$/.test(s) &&
+       !/^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}$/.test(s)) return false;
+    return !isNaN(Date.parse(s));
+  }
+
+  function isBooleanCell(v){
+    return /^(true|false|yes|no|是|否)$/i.test(String(v == null ? "" : v).trim());
+  }
+
+  function buildProfile(matrix){
+    var rows = matrix.rows, headers = matrix.headers;
+    var fields = headers.map(function(name, col){
+      var freq = Object.create(null), unique = Object.create(null);
+      var missing = 0, nonempty = 0, numeric = 0, dates = 0, bools = 0;
+      rows.forEach(function(r){
+        var value = String(r && r[col] != null ? r[col] : "").trim();
+        if(!value){ missing++; return; }
+        nonempty++;
+        if(!unique[value]) unique[value] = 1;
+        freq[value] = (freq[value] || 0) + 1;
+        if(isNumericCell(value)) numeric++;
+        if(isDateCell(value)) dates++;
+        if(isBooleanCell(value)) bools++;
+      });
+      var type = "text";
+      if(!nonempty) type = "empty";
+      else if(bools === nonempty) type = "boolean";
+      else if(numeric / nonempty >= 0.8) type = "numeric";
+      else if(dates / nonempty >= 0.8) type = "date";
+      var values = Object.keys(freq).map(function(value){ return { value: value, count: freq[value] }; });
+      values.sort(function(a, b){ return b.count - a.count || a.value.localeCompare(b.value, "zh-CN"); });
+      return {
+        name: name, type: type, missing: missing, nonempty: nonempty,
+        unique: Object.keys(unique).length, values: values
+      };
+    });
+    var types = { numeric: 0, text: 0, date: 0, boolean: 0, empty: 0 };
+    var missingCells = 0, complete = 0;
+    fields.forEach(function(f){
+      types[f.type]++;
+      missingCells += f.missing;
+      if(!f.missing) complete++;
+    });
+    return { rows: rows.length, cols: headers.length, fields: fields, types: types, missingCells: missingCells, complete: complete };
+  }
+
+  function profileOf(f){
+    var key = f.id + "|" + f.uploadedAt + "|" + f.size;
+    if(profileCache[key]) return Promise.resolve(profileCache[key]);
+    var pending = (async function(){
+      var blob = f.blob;
+      if(f.remote) blob = await cloudBlob(f);
+      if(!blob) throw new Error("找不到文件内容，请重新上传后再分析");
+      var buf = await readBuf(blob);
+      var matrix = f.ext === "csv" ? matrixCSV(buf) : f.ext === "json" ? matrixJSON(buf) : await matrixXL(buf, f.ext);
+      return buildProfile(matrix);
+    })();
+    profileCache[key] = pending;
+    return pending.then(function(p){
+      profileCache[key] = p;
+      return p;
+    }, function(e){
+      delete profileCache[key];
+      throw e;
+    });
+  }
+
   /* ================= 上传 ================= */
 
   function readBuf(file){
@@ -2368,6 +2654,175 @@
     }
   }
 
+  /* ================= 数据洞察 ================= */
+
+  var TYPE_META = {
+    numeric: { label: "数值", color: "#2563EB" },
+    text: { label: "文本", color: "#94A3B8" },
+    date: { label: "日期", color: "#0EA5E9" },
+    boolean: { label: "布尔", color: "#D97706" },
+    empty: { label: "空字段", color: "#D8DEE9" }
+  };
+
+  function insightRankCard(){
+    var ranked = files.slice().sort(function(a, b){ return (b.rows || 0) - (a.rows || 0); });
+    var shown = insightFilesExpanded ? ranked : ranked.slice(0, 10);
+    var max = Math.max.apply(null, ranked.map(function(f){ return f.rows || 0; }).concat([1]));
+    var rows = shown.map(function(f){
+      var n = f.rows || 0;
+      return '<div class="bar-row"><span class="bar-label" title="' + esc(f.name) + '">' + esc(f.name) + '</span>' +
+        '<span class="bar-track"><i style="width:' + Math.max(n ? 1 : 0, n / max * 100).toFixed(1) + '%"></i></span>' +
+        '<span class="bar-value">' + (f.rows == null ? "—" : nf(f.rows) + " 条") + '</span></div>';
+    }).join("");
+    var lead = ranked.length && ranked[0].rows != null
+      ? '「' + esc(ranked[0].name) + '」的数据最多，共 ' + nf(ranked[0].rows) + ' 条。'
+      : "暂时还没有可比较的数据量。";
+    return '<section class="card insight-card" id="insightRank">' +
+      '<div class="card-head"><div><h2>文件数据量排行</h2><p>按每个文件包含的数据条数从高到低排列</p></div><span class="num">' + files.length + ' 个文件</span></div>' +
+      '<p class="insight-story">' + lead + '</p><div class="rank-list">' + rows + '</div>' +
+      (ranked.length > 10 ? '<button class="btn insight-toggle" type="button" data-insight-files aria-expanded="' + insightFilesExpanded + '">' +
+        (insightFilesExpanded ? '收起，只看前 10 个' : '展开全部 ' + ranked.length + ' 个文件') + '</button>' : '') +
+      '</section>';
+  }
+
+  function insightTypeChart(p){
+    var total = p.fields.length, C = 2 * Math.PI * 45, off = 0, arcs = "";
+    Object.keys(TYPE_META).forEach(function(k){
+      var n = p.types[k] || 0;
+      if(!n || !total) return;
+      var len = Math.max(0, n / total * C - 1.5);
+      arcs += '<circle cx="60" cy="60" r="45" fill="none" stroke="' + TYPE_META[k].color + '" stroke-width="14" ' +
+        'stroke-dasharray="' + len.toFixed(2) + ' ' + (C - len).toFixed(2) + '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 60 60)">' +
+        '<title>' + TYPE_META[k].label + ' · ' + n + ' 个字段</title></circle>';
+      off += n / total * C;
+    });
+    return '<figure class="type-chart" role="img" aria-label="字段类型分布"><svg viewBox="0 0 120 120" aria-hidden="true">' +
+      '<circle cx="60" cy="60" r="45" fill="none" stroke="#EFF2F7" stroke-width="14"/>' + arcs +
+      '<text x="60" y="58" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="19" font-weight="600" fill="#0A0D14">' + total + '</text>' +
+      '<text x="60" y="75" text-anchor="middle" font-family="Noto Sans SC,sans-serif" font-size="9" fill="#6B7280">个字段</text></svg></figure>';
+  }
+
+  function insightTypeCard(p){
+    var legend = Object.keys(TYPE_META).map(function(k){
+      var n = p.types[k] || 0;
+      return '<div class="type-item"><i style="background:' + TYPE_META[k].color + '"></i><span>' + TYPE_META[k].label + '</span><b>' + n + '</b></div>';
+    }).join("");
+    var dominant = "text";
+    Object.keys(TYPE_META).forEach(function(k){ if((p.types[k] || 0) > (p.types[dominant] || 0)) dominant = k; });
+    var story = p.fields.length
+      ? '这份数据以' + TYPE_META[dominant].label + '字段为主：' + p.types[dominant] + ' / ' + p.fields.length + ' 列。数值列适合求和或比较，文本列更适合看分类和频次。'
+      : "没有识别出可用字段。";
+    return '<section class="card insight-card" id="insightTypes"><div class="card-head"><div><h2>字段类型分布</h2><p>按每列至少 80% 的非空值判断；混合内容归为文本</p></div></div>' +
+      '<div class="type-layout">' + insightTypeChart(p) + '<div class="type-legend">' + legend + '</div></div>' +
+      '<p class="insight-story">' + story + '</p></section>';
+  }
+
+  function insightFieldsCard(p){
+    var rows = p.fields.map(function(f, i){
+      return '<tr><td><button class="field-pick" type="button" data-insight-field="' + i + '" aria-pressed="' + (i === insightField) + '" title="查看 ' + esc(f.name) + ' 的高频值">' + esc(f.name) + '</button></td>' +
+        '<td><span class="type-badge" data-type="' + f.type + '">' + TYPE_META[f.type].label + '</span></td>' +
+        '<td><span class="cell-num">' + nf(f.nonempty) + '</span></td><td><span class="cell-num">' + nf(f.missing) + '</span></td>' +
+        '<td><span class="cell-num">' + nf(f.unique) + '</span></td></tr>';
+    }).join("");
+    return '<section class="card insight-card" id="insightFields"><div class="card-head"><div><h2>字段明细</h2><p>点字段名，可以在下方切换它的「高频值」统计</p></div><span class="num">' + p.cols + ' 列</span></div>' +
+      '<div class="field-table-wrap"><table class="field-table"><caption>各字段的类型与数据质量</caption><thead><tr><th>字段</th><th>类型</th><th>非空</th><th>缺失</th><th>唯一值</th></tr></thead><tbody>' + rows + '</tbody></table></div></section>';
+  }
+
+  function insightFrequencyCard(p){
+    if(!p.fields.length) return "";
+    if(insightField >= p.fields.length) insightField = 0;
+    var field = p.fields[insightField];
+    var options = p.fields.map(function(f, i){
+      return '<option value="' + i + '"' + (i === insightField ? ' selected' : '') + '>' + esc(f.name) + '</option>';
+    }).join("");
+    var values = insightFreqExpanded ? field.values : field.values.slice(0, 10);
+    var max = values.length ? values[0].count : 1;
+    var list = values.map(function(v){
+      var pct = field.nonempty ? v.count / field.nonempty * 100 : 0;
+      return '<div class="bar-row"><span class="bar-label" title="' + esc(v.value) + '">' + esc(v.value) + '</span>' +
+        '<span class="bar-track"><i style="width:' + Math.max(1, v.count / max * 100).toFixed(1) + '%"></i></span>' +
+        '<span class="bar-value">' + nf(v.count) + ' 次 · ' + pct.toFixed(1) + '%</span></div>';
+    }).join("");
+    var story = field.values.length
+      ? '字段「' + esc(field.name) + '」里，「' + esc(field.values[0].value) + '」出现最多：' + nf(field.values[0].count) + ' 次，占非空数据的 ' +
+        (field.nonempty ? (field.values[0].count / field.nonempty * 100).toFixed(1) : "0.0") + '%。'
+      : '字段「' + esc(field.name) + '」没有非空值，暂时没有频次可统计。';
+    return '<section class="card insight-card" id="insightFrequency"><div class="card-head"><div><h2>高频值 Top 10</h2><p>同一值出现得越多，横条越长；百分比以该字段非空数据为基数</p></div>' +
+      '<div class="freq-tools"><label class="sr" for="insightFieldSelect">选择字段</label><select id="insightFieldSelect">' + options + '</select></div></div>' +
+      '<p class="insight-story">' + story + '</p>' +
+      (list ? '<div class="freq-list">' + list + '</div>' : '<div class="insight-empty"><strong>这一列全是空值</strong><p>换一列看看，或回到字段明细检查缺失情况。</p></div>') +
+      (field.values.length > 10 ? '<button class="btn insight-toggle" type="button" data-insight-freq aria-expanded="' + insightFreqExpanded + '">' +
+        (insightFreqExpanded ? '收起，只看前 10 项' : '展开全部 ' + field.values.length + ' 项') + '</button>' : '') + '</section>';
+  }
+
+  function insightMissingCard(p){
+    var sorted = p.fields.slice().sort(function(a, b){ return b.missing - a.missing; });
+    var maxPct = p.rows ? Math.max.apply(null, sorted.map(function(f){ return f.missing / p.rows * 100; }).concat([1])) : 1;
+    var list = sorted.map(function(f){
+      var pct = p.rows ? f.missing / p.rows * 100 : 0;
+      return '<div class="bar-row"><span class="bar-label" title="' + esc(f.name) + '">' + esc(f.name) + '</span>' +
+        '<span class="bar-track"><i style="width:' + (pct ? Math.max(1, pct) : 0).toFixed(1) + '%;background:' + (pct ? '#60A5FA' : '#D8DEE9') + '"></i></span>' +
+        '<span class="bar-value">' + nf(f.missing) + ' · ' + pct.toFixed(1) + '%</span></div>';
+    }).join("");
+    var story = p.complete + ' / ' + p.cols + ' 个字段没有缺失。';
+    if(sorted.length && sorted[0].missing) story += '「' + esc(sorted[0].name) + '」缺失最多，共 ' + nf(sorted[0].missing) + ' 个空值。';
+    else story += '所有字段都填满了，这份数据的完整性很好。';
+    return '<section class="card insight-card" id="insightMissing"><div class="card-head"><div><h2>缺失情况</h2><p>空字符串、空白单元格与 JSON 空值都计为缺失</p></div><span class="num">' + nf(p.missingCells) + ' 个空值</span></div>' +
+      '<p class="insight-story">' + story + '</p><div class="missing-list">' + list + '</div></section>';
+  }
+
+  function renderInsightData(f, p){
+    var typeName = (f.ext || "").toUpperCase();
+    document.getElementById("insightContent").innerHTML =
+      '<section class="card insight-card" id="insightSummary"><div class="card-head"><div><h2>结构总览</h2><p>' + esc(f.name) + '</p></div><span class="num">' + esc(typeName) + '</span></div>' +
+      '<div class="insight-summary">' +
+        '<div class="insight-stat"><span>数据行数</span><b>' + nf(p.rows) + '<em>行</em></b></div>' +
+        '<div class="insight-stat"><span>字段列数</span><b>' + nf(p.cols) + '<em>列</em></b></div>' +
+        '<div class="insight-stat"><span>完整字段</span><b>' + nf(p.complete) + '<em>/ ' + nf(p.cols) + '</em></b></div>' +
+        '<div class="insight-stat"><span>文件大小</span><b>' + esc(kb(f.size)) + '</b></div>' +
+      '</div><p class="insight-story">这份 ' + esc(typeName) + ' 数据有 <b>' + nf(p.rows) + ' 行、' + nf(p.cols) + ' 列</b>；' +
+        (p.rows && p.cols ? '相当于一张 ' + nf(p.rows) + ' × ' + nf(p.cols) + ' 的表，共 ' + nf(p.rows * p.cols) + ' 个单元格。' : '当前没有形成可统计的二维表。') + '</p>' +
+      '<p class="insight-source">统计基于完整文件，不只是「数据表」里的前 20 行预览。</p></section>' +
+      insightRankCard() + insightTypeCard(p) + insightFieldsCard(p) + insightFrequencyCard(p) + insightMissingCard(p);
+  }
+
+  function drawInsight(){
+    var select = document.getElementById("insightFile");
+    var content = document.getElementById("insightContent");
+    if(!select || !content) return;
+    select.innerHTML = files.map(function(f){ return '<option value="' + esc(f.id) + '">' + esc(f.name) + ' · ' + (f.rows == null ? "—" : nf(f.rows) + " 条") + '</option>'; }).join("");
+    select.disabled = !files.length;
+    if(!files.length){
+      insightToken++;
+      insightFileId = "";
+      insightProfile = null;
+      content.innerHTML = '<div class="insight-empty"><strong>还没有可以分析的文件</strong><p>先上传 CSV、Excel 或 JSON，再回来看字段类型、数据量排行和高频值。</p></div>';
+      return;
+    }
+    var f = findFile(insightFileId);
+    if(!f){
+      f = files[0];
+      insightFileId = f.id;
+      insightField = 0;
+      insightFreqExpanded = false;
+      insightProfile = null;
+    }
+    select.value = f.id;
+    if(!document.getElementById("pane-insight").classList.contains("is-on")) return;
+    var key = f.id + "|" + f.uploadedAt + "|" + f.size;
+    if(insightProfile && insightProfile.key === key){ renderInsightData(f, insightProfile.data); return; }
+    var token = ++insightToken;
+    content.innerHTML = '<div class="card insight-card"><div class="insight-loading"><i aria-hidden="true"></i><span>正在读取完整文件并统计「' + esc(f.name) + '」…</span></div></div>';
+    profileOf(f).then(function(p){
+      if(token !== insightToken) return;
+      insightProfile = { key: key, data: p };
+      renderInsightData(f, p);
+    }).catch(function(e){
+      if(token !== insightToken) return;
+      content.innerHTML = '<div class="insight-empty"><strong>这份文件暂时无法分析</strong><p>' + esc(errText(e) || "内容解析失败") + '</p></div>' + insightRankCard();
+    });
+  }
+
   /* ================= 数据表 ================= */
 
   function previewBlock(f){
@@ -2412,19 +2867,33 @@
         '<td class="c-time"><span>' + fmtTime(f.uploadedAt) + "</span></td>" +
         '<td class="c-act"><div class="act">' +
           '<button type="button" data-dl="' + f.id + '" title="下载原文件" aria-label="下载 ' +
-            esc(f.name) + '">↓</button>' +
-          '<button type="button" data-kill="' + f.id + '" title="删除" aria-label="删除 ' +
-            esc(f.name) + '">×</button>' +
+            esc(f.name) + '"><span aria-hidden="true">↓</span>下载</button>' +
+          '<button type="button" data-kill="' + f.id + '" title="删除文件" aria-label="删除 ' +
+            esc(f.name) + '"><span aria-hidden="true">×</span>删除</button>' +
         "</div></td>" +
       "</tr>";
     if(open) row += '<tr class="prev-row"><td colspan="5">' + previewBlock(f) + "</td></tr>";
     return row;
   }
 
+  function filteredFiles(){
+    var q = fileQuery.trim().toLowerCase();
+    if(!q) return files;
+    return files.filter(function(f){
+      return String(f.name || "").toLowerCase().indexOf(q) >= 0 || String(f.ext || "").toLowerCase().indexOf(q) >= 0;
+    });
+  }
+
   function drawFiles(){
     var body = document.getElementById("filesBody");
-    document.getElementById("filesMeta").textContent =
-      "共 " + files.length + " 个文件 · 合计 " + nf(totalRows()) + " 条 · " + kb(totalSize());
+    var shown = filteredFiles();
+    var rows = shown.reduce(function(s, f){ return s + (f.rows || 0); }, 0);
+    var size = shown.reduce(function(s, f){ return s + (f.size || 0); }, 0);
+    document.getElementById("filesMeta").textContent = fileQuery.trim()
+      ? "找到 " + shown.length + " / " + files.length + " 个文件 · " + nf(rows) + " 条 · " + kb(size)
+      : "共 " + files.length + " 个文件 · 合计 " + nf(totalRows()) + " 条 · " + kb(totalSize());
+    var searchMeta = document.getElementById("searchMeta");
+    if(searchMeta) searchMeta.textContent = fileQuery.trim() ? "搜索到 " + shown.length + " 个文件" : "";
 
     var pend = CLOUD.on ? files.filter(function(f){ return f.pending; }).length : 0;
     var sp = document.getElementById("syncPending");
@@ -2433,10 +2902,15 @@
       sp.textContent = "同步 " + pend + " 个到云端";
     }
 
-    body.innerHTML = files.length
-      ? files.map(fileRow).join("")
-      : '<tr><td colspan="5"><div class="empty"><strong>还没有文件</strong>' +
+    if(!files.length){
+      body.innerHTML = '<tr><td colspan="5"><div class="empty"><strong>还没有文件</strong>' +
         "把 CSV、Excel 或 JSON 拖到上面的框里，或者点一下选择文件。</div></td></tr>";
+    }else if(!shown.length){
+      body.innerHTML = '<tr><td colspan="5"><div class="empty"><strong>没有匹配「' + esc(fileQuery.trim()) + '」的文件</strong>' +
+        "换个文件名或格式关键词试试；按 Esc 可以清空搜索。</div></td></tr>";
+    }else{
+      body.innerHTML = shown.map(fileRow).join("");
+    }
   }
 
   /* ================= 存储 ================= */
@@ -2536,6 +3010,7 @@
     drawMetrics();
     drawRecent();
     drawRail();
+    drawInsight();
     drawFiles();
     drawStorage();
     drawAbout();
@@ -2543,7 +3018,7 @@
 
   /* ================= 路由 ================= */
 
-  var VIEWS = ["overview", "data", "storage", "about"];
+  var VIEWS = ["overview", "insight", "data", "storage", "about"];
   var ALIAS = { "": "overview", top: "overview", records: "data" };
 
   function route(){
@@ -2562,6 +3037,7 @@
     window.scrollTo(0, 0);
 
     if(h === "overview"){ drawChart(); drawHero(false); }
+    else if(h === "insight") drawInsight();
     else if(h === "data") drawFiles();
     else if(h === "storage") drawStorage();
     else if(h === "about") drawAbout();
@@ -2596,6 +3072,61 @@
 
   document.getElementById("toStorage").addEventListener("click", function(){ location.hash = "#storage"; });
   document.getElementById("toData").addEventListener("click", function(){ location.hash = "#data"; });
+
+  document.getElementById("insightFile").addEventListener("change", function(e){
+    insightFileId = e.target.value;
+    insightField = 0;
+    insightFreqExpanded = false;
+    insightProfile = null;
+    drawInsight();
+  });
+  document.getElementById("insightContent").addEventListener("click", function(e){
+    var field = e.target.closest("[data-insight-field]");
+    if(field){
+      insightField = parseInt(field.getAttribute("data-insight-field"), 10) || 0;
+      insightFreqExpanded = false;
+      drawInsight();
+      live("已切换高频值字段");
+      return;
+    }
+    var freq = e.target.closest("[data-insight-freq]");
+    if(freq){ insightFreqExpanded = !insightFreqExpanded; drawInsight(); return; }
+    var rank = e.target.closest("[data-insight-files]");
+    if(rank){ insightFilesExpanded = !insightFilesExpanded; drawInsight(); }
+  });
+  document.getElementById("insightContent").addEventListener("change", function(e){
+    if(e.target.id !== "insightFieldSelect") return;
+    insightField = parseInt(e.target.value, 10) || 0;
+    insightFreqExpanded = false;
+    drawInsight();
+  });
+
+  var fileSearch = document.getElementById("fileSearch");
+  var searchClear = document.getElementById("searchClear");
+  function clearFileSearch(focus){
+    fileQuery = "";
+    fileSearch.value = "";
+    searchClear.hidden = true;
+    drawFiles();
+    if(focus) fileSearch.focus();
+  }
+  fileSearch.addEventListener("input", function(){
+    fileQuery = fileSearch.value || "";
+    searchClear.hidden = !fileQuery;
+    drawFiles();
+    if(fileQuery.trim() && location.hash !== "#data") location.hash = "#data";
+  });
+  searchClear.addEventListener("click", function(){ clearFileSearch(true); live("已清空文件搜索"); });
+  document.addEventListener("keydown", function(e){
+    var tag = (e.target && e.target.tagName || "").toLowerCase();
+    var editing = tag === "input" || tag === "textarea" || tag === "select" || (e.target && e.target.isContentEditable);
+    if(e.key === "/" && !editing && document.getElementById("gate").hidden){
+      e.preventDefault();
+      fileSearch.focus();
+    }else if(e.key === "Escape" && fileQuery){
+      clearFileSearch(false);
+    }
+  });
 
   function hasFiles(e){
     var t = e.dataTransfer;
@@ -2685,7 +3216,7 @@
     }
     if(download(f.name, blob, f.mime)){
       sync("ok", "已下载 " + f.name);
-      flash(btn, "✓");
+      flash(btn, "已下载");
       live("已下载 " + f.name);
     }else{
       sync("error", "下载失败");
