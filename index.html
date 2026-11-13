@@ -536,7 +536,45 @@
   .insight-stat b em{font-family:var(--sans);font-size:12px;font-style:normal;font-weight:500;color:var(--mute);margin-left:5px}
   .insight-story{margin:0;padding:14px 16px;border-left:3px solid var(--blue);background:var(--blue-soft);border-radius:0 var(--r-sm) var(--r-sm) 0;color:var(--ink-soft);font-size:14px;line-height:1.8}
   .insight-source{margin:-6px 0 0;font-size:12px;color:var(--mute-2)}
-  .rank-list,.freq-list,.missing-list{display:flex;flex-direction:column;gap:13px}
+  .missing-list{display:flex;flex-direction:column;gap:13px}
+
+  /* 2×2 子图网格 */
+  .insight-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;align-items:stretch}
+  .insight-grid .insight-card{padding:22px;gap:17px}
+  .insight-grid .card-head h2{font-size:16.5px}
+  .insight-grid .card-head p{font-size:12.5px}
+  .insight-grid .insight-summary{grid-template-columns:1fr 1fr}
+  .insight-grid .type-layout{grid-template-columns:150px minmax(0,1fr);gap:20px}
+  .insight-grid .type-chart,.insight-grid .type-chart svg{width:150px;height:150px}
+  .insight-grid .type-legend{gap:8px}
+  .insight-grid .type-item{padding:9px 11px}
+  .insight-grid .field-table{min-width:470px}
+  .insight-grid .field-table th{padding:10px 12px}
+  .insight-grid .field-table td{height:44px;padding:0 12px}
+  .insight-grid .field-pick{max-width:150px;font-size:13.5px}
+  .insight-grid .col-chart{height:206px;gap:7px}
+  .insight-grid .col-item{min-width:36px}
+  .insight-grid .col-item b{font-size:10.5px}
+  .insight-grid .bar-row{grid-template-columns:minmax(78px,.9fr) minmax(80px,1.6fr) 84px;gap:11px}
+  .insight-grid .ratio-row{grid-template-columns:minmax(78px,.9fr) minmax(80px,1.6fr) 92px}
+  .insight-grid .bar-label{font-size:12.5px}
+  .insight-grid .bar-value{font-size:11px}
+  .insight-grid .insight-story{font-size:12.5px;line-height:1.75;padding:12px 14px}
+  .insight-grid .list-scroll{max-height:296px}
+  .insight-grid .freq-tools select{max-width:160px}
+
+  /* 词云 */
+  .cloud-wrap{position:relative;width:100%;height:320px;overflow:hidden;border:1px solid var(--rule-soft);border-radius:var(--r-md);background:radial-gradient(120% 120% at 50% 0%,#F8FAFF 0%,#FFF 62%)}
+  .cloud-word{
+    position:absolute;white-space:nowrap;font-weight:600;line-height:1;
+    transform:translate(-50%,-50%);transform-origin:center;
+    animation:cloudIn .5s cubic-bezier(.22,.61,.36,1) both;
+  }
+  .cloud-word:hover{color:var(--blue-deep)}
+  @keyframes cloudIn{from{opacity:0;transform:translate(-50%,-50%) scale(.86)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+  .cloud-empty{margin:0;padding:70px 20px;text-align:center;color:var(--mute);font-size:13.5px}
+  .cloud-meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mute)}
+  .cloud-meta i{width:9px;height:9px;border-radius:2px;background:linear-gradient(90deg,#93C0FF,#2563EB)}
   .bar-row{display:grid;grid-template-columns:minmax(120px,1.15fr) minmax(160px,2.4fr) 92px;align-items:center;gap:14px;min-height:26px}
   .bar-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px;font-weight:500;color:var(--ink-soft)}
   .bar-track{height:9px;border-radius:var(--pill);background:var(--rule-soft);overflow:hidden}
@@ -760,6 +798,22 @@
     .store-grid{grid-template-columns:minmax(0,1fr)}
     .about-grid{grid-template-columns:minmax(0,1fr);gap:34px}
     .about-side{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .insight-grid{grid-template-columns:minmax(0,1fr);gap:20px}
+    .insight-grid .insight-card{padding:22px}
+    .insight-grid .type-layout{grid-template-columns:180px minmax(0,1fr);gap:28px}
+    .insight-grid .type-chart,.insight-grid .type-chart svg{width:180px;height:180px}
+    .insight-grid .field-table{min-width:560px}
+    .insight-grid .field-pick{max-width:260px;font-size:14px}
+    .insight-grid .col-chart{height:230px}
+    .insight-grid .col-item{min-width:44px}
+    .insight-grid .col-item b{font-size:11.5px}
+    .insight-grid .bar-row{grid-template-columns:minmax(110px,1fr) minmax(140px,2.1fr) 100px;gap:13px}
+    .insight-grid .ratio-row{grid-template-columns:minmax(110px,1fr) minmax(140px,2.1fr) 108px}
+    .insight-grid .bar-label{font-size:13.5px}
+    .insight-grid .bar-value{font-size:12px}
+    .insight-grid .insight-story{font-size:14px;line-height:1.8;padding:14px 16px}
+    .insight-grid .list-scroll{max-height:330px}
+    .insight-grid .freq-tools select{max-width:230px}
   }
   @media (max-width:760px){
     .bar-in{flex-wrap:wrap;height:auto;padding:10px var(--pad) 8px;row-gap:6px}
@@ -803,6 +857,7 @@
     .col-track em{font-size:10px}
     .ratio-track{height:11px}
     .list-scroll{max-height:302px}
+    .cloud-wrap{height:262px}
     .file-table .c-time,.file-table .c-size{display:none}
     .file-table .c-rows{width:58px}
     .file-table .c-act{width:154px}
@@ -1753,7 +1808,6 @@
   var insightFileId = "";
   var insightField = 0;
   var insightFreqExpanded = false;
-  var insightFilesExpanded = false;
   var insightFieldsExpanded = false;
   var insightMissingExpanded = false;
   var insightToken = 0;
@@ -2742,29 +2796,6 @@
       (expanded ? "收起" : "展开 " + nf(total) + (unit || "")) + '<i aria-hidden="true"></i></button>';
   }
 
-  function insightRankCard(){
-    var ranked = files.slice().sort(function(a, b){ return (b.rows || 0) - (a.rows || 0); });
-    var shown = insightFilesExpanded ? ranked : ranked.slice(0, 10);
-    var max = Math.max.apply(null, ranked.map(function(f){ return f.rows || 0; }).concat([1]));
-    var rows = shown.map(function(f){
-      var n = f.rows || 0;
-      return '<div class="bar-row"><span class="bar-label" title="' + esc(f.name) + '">' + esc(f.name) + '</span>' +
-        '<span class="bar-track"><i style="width:' + Math.max(n ? 1 : 0, n / max * 100).toFixed(1) + '%"></i></span>' +
-        '<span class="bar-value">' + (f.rows == null ? "—" : nf(f.rows) + " 条") + '</span></div>';
-    }).join("");
-    var lead = ranked.length && ranked[0].rows != null
-      ? '「' + esc(ranked[0].name) + '」的数据最多，共 ' + nf(ranked[0].rows) + ' 条。'
-      : "暂时还没有可比较的数据量。";
-    return '<section class="card insight-card" id="insightRank">' +
-      '<div class="card-head"><div><h2>文件数据量排行</h2><p>按每个文件包含的数据条数从高到低排列，默认显示前 10 个</p></div>' +
-      '<div class="card-tools"><span class="num">' + files.length + ' 个</span>' +
-      (ranked.length > 10 ? foldBtn("data-insight-files", insightFilesExpanded, ranked.length, " 个") : "") +
-      '</div></div>' +
-      '<p class="insight-story">' + lead + '</p>' +
-      '<div class="list-scroll' + (insightFilesExpanded ? " is-open" : "") + '"><div class="rank-list">' + rows + '</div></div>' +
-      '</section>';
-  }
-
   function insightTypeChart(p){
     var total = p.fields.length, C = 2 * Math.PI * 45, off = 0, arcs = "";
     Object.keys(TYPE_META).forEach(function(k){
@@ -2868,8 +2899,127 @@
       '<div class="list-scroll' + (insightMissingExpanded ? " is-open" : "") + '"><div class="missing-list">' + list + '</div></div></section>';
   }
 
+  /* ================= 词云 ================= */
+
+  var CLOUD_MAX = 34;
+  var CLOUD_COLORS = ["#1E3A8A", "#1D4ED8", "#2563EB", "#3B82F6", "#60A5FA", "#475569", "#64748B", "#94A3B8"];
+
+  function cloudWords(p){
+    var agg = {};
+    p.fields.forEach(function(f){
+      // 布尔与日期是结构值，放在高频值卡片里更合适，词云只收真正的内容词
+      if(f.type === "boolean" || f.type === "date") return;
+      f.values.slice(0, 12).forEach(function(v){
+        var t = String(v.value).trim();
+        if(!t || t.length > 18) return;
+        if(/^-?\d+([.,]\d+)?$/.test(t)) return;
+        if(/^(true|false|null|yes|no|是|否)$/i.test(t)) return;
+        if(/^\d{4}[-/.年]\d{1,2}([-/.月]\d{1,2})?/.test(t)) return;
+        if(/^\d{1,2}[:：]\d{2}/.test(t)) return;
+        agg[t] = (agg[t] || 0) + v.count;
+      });
+    });
+    var list = Object.keys(agg).map(function(t){ return { text: t, count: agg[t] }; });
+    list.sort(function(a, b){ return b.count - a.count || a.text.localeCompare(b.text, "zh-CN", { numeric: true }); });
+    list = list.slice(0, CLOUD_MAX);
+    var max = list.length ? list[0].count : 1;
+    list.forEach(function(w, i){
+      var r = Math.pow(w.count / max, 0.75);          // 让低频词明显小于高频词，层级更清楚
+      w.size = Math.round(12 + r * 23);
+      w.color = CLOUD_COLORS[Math.min(CLOUD_COLORS.length - 1, Math.floor((1 - r) * CLOUD_COLORS.length))];
+      w.delay = Math.min(i * 24, 540);
+    });
+    return list;
+  }
+
+  var cloudCtx = null;
+
+  function cloudRnd(seed){
+    var a = seed >>> 0;
+    return function(){
+      a = (a + 0x6D2B79F5) >>> 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function layoutCloud(box, words){
+    var W = box.clientWidth, H = box.clientHeight;
+    if(!W || !H) return 0;
+    if(!cloudCtx) cloudCtx = document.createElement("canvas").getContext("2d");
+    var placed = [], made = 0;
+    var rnd = cloudRnd(words.length * 131 + Math.round(W) * 7 + Math.round(H));
+    words.forEach(function(w, i){
+      cloudCtx.font = "600 " + w.size + "px 'Noto Sans SC','PingFang SC','Microsoft YaHei',system-ui,sans-serif";
+      var tw = cloudCtx.measureText(w.text).width + 7;
+      var th = w.size * 1.3;
+      var spanX = W - tw - 8, spanY = H - th - 8;
+      if(spanX < 0 || spanY < 0) return;
+      var spot = null;
+      for(var t = 0; t < 700; t++){
+        var left = 4 + rnd() * spanX;
+        var top = 4 + rnd() * spanY;
+        var hit = false;
+        for(var j = 0; j < placed.length; j++){
+          var r = placed[j];
+          if(left < r.right + 5 && left + tw + 5 > r.left && top < r.bottom + 3 && top + th + 3 > r.top){ hit = true; break; }
+        }
+        if(!hit){ spot = { left: left, top: top, right: left + tw, bottom: top + th }; break; }
+      }
+      if(!spot) return;
+      placed.push(spot);
+      var el = document.createElement("span");
+      el.className = "cloud-word";
+      el.textContent = w.text;
+      el.title = w.text + " · 出现 " + nf(w.count) + " 次";
+      el.style.cssText = "left:" + (spot.left + tw / 2).toFixed(1) + "px;top:" + (spot.top + th / 2).toFixed(1) + "px;" +
+        "font-size:" + w.size + "px;color:" + w.color + ";animation-delay:" + w.delay + "ms";
+      box.appendChild(el);
+      made++;
+    });
+    return made;
+  }
+
+  function renderCloud(words, tries){
+    var box = document.getElementById("wordCloud");
+    if(!box) return;
+    box.innerHTML = "";
+    if(!words || !words.length){
+      box.innerHTML = '<p class="cloud-empty">这份数据里没有可用的文本取值，词云暂时是空的。</p>';
+      return;
+    }
+    if(!box.clientWidth || !box.clientHeight){
+      if((tries || 0) < 3) setTimeout(function(){ renderCloud(words, (tries || 0) + 1); }, 90);
+      return;
+    }
+    var made = layoutCloud(box, words);
+    var num = document.querySelector("#insightCloud .num");
+    if(num) num.textContent = nf(made) + " 个词";
+  }
+
+  var cloudResizeT = 0;
+  window.addEventListener("resize", function(){
+    clearTimeout(cloudResizeT);
+    cloudResizeT = setTimeout(function(){
+      var box = document.getElementById("wordCloud");
+      if(box && box.clientWidth && insightProfile && insightProfile.data){
+        renderCloud(cloudWords(insightProfile.data));
+      }
+    }, 240);
+  });
+
+  function insightCloudCard(words){
+    return '<section class="card insight-card" id="insightCloud">' +
+      '<div class="card-head"><div><h2>高频词云</h2><p>把各列出现最多的取值放在一张图上：字号越大、颜色越深，表示出现得越多</p></div>' +
+      '<div class="card-tools"><span class="num">' + nf(words.length) + ' 个词</span></div></div>' +
+      '<div class="cloud-wrap" id="wordCloud"></div>' +
+      '<p class="cloud-meta">鼠标悬停可看具体次数；纯数字、布尔、日期与超过 18 字的文本不进入词云</p></section>';
+  }
+
   function renderInsightData(f, p){
     var typeName = (f.ext || "").toUpperCase();
+    var words = cloudWords(p);
     document.getElementById("insightContent").innerHTML =
       '<section class="card insight-card" id="insightSummary"><div class="card-head"><div><h2>结构总览</h2><p>' + esc(f.name) + '</p></div><span class="num">' + esc(typeName) + '</span></div>' +
       '<div class="insight-summary">' +
@@ -2880,7 +3030,11 @@
       '</div><p class="insight-story">这份 ' + esc(typeName) + ' 数据有 <b>' + nf(p.rows) + ' 行、' + nf(p.cols) + ' 列</b>；' +
         (p.rows && p.cols ? '相当于一张 ' + nf(p.rows) + ' × ' + nf(p.cols) + ' 的表，共 ' + nf(p.rows * p.cols) + ' 个单元格。' : '当前没有形成可统计的二维表。') + '</p>' +
       '<p class="insight-source">统计基于完整文件，不只是「数据表」里的前 20 行预览。</p></section>' +
-      insightRankCard() + insightTypeCard(p) + insightFieldsCard(p) + insightFrequencyCard(p) + insightMissingCard(p);
+      '<div class="insight-grid">' +
+        insightTypeCard(p) + insightFieldsCard(p) + insightFrequencyCard(p) + insightMissingCard(p) +
+      '</div>' +
+      insightCloudCard(words);
+    renderCloud(words);
   }
 
   function drawInsight(){
@@ -2893,7 +3047,7 @@
       insightToken++;
       insightFileId = "";
       insightProfile = null;
-      content.innerHTML = '<div class="insight-empty"><strong>还没有可以分析的文件</strong><p>先上传 CSV、Excel 或 JSON，再回来看字段类型、数据量排行和高频值。</p></div>';
+      content.innerHTML = '<div class="insight-empty"><strong>还没有可以分析的文件</strong><p>先上传 CSV、Excel 或 JSON，再回来看字段类型、字段明细、高频值和高频词云。</p></div>';
       return;
     }
     var f = findFile(insightFileId);
@@ -2916,7 +3070,7 @@
       renderInsightData(f, p);
     }).catch(function(e){
       if(token !== insightToken) return;
-      content.innerHTML = '<div class="insight-empty"><strong>这份文件暂时无法分析</strong><p>' + esc(errText(e) || "内容解析失败") + '</p></div>' + insightRankCard();
+      content.innerHTML = '<div class="insight-empty"><strong>这份文件暂时无法分析</strong><p>' + esc(errText(e) || "内容解析失败") + '</p></div>';
     });
   }
 
@@ -3188,11 +3342,10 @@
       live("已切换高频值字段");
       return;
     }
-    var fold = e.target.closest("[data-insight-freq],[data-insight-files],[data-insight-fields],[data-insight-missing]");
+    var fold = e.target.closest("[data-insight-freq],[data-insight-fields],[data-insight-missing]");
     if(!fold) return;
     var attr = "";
     if(fold.hasAttribute("data-insight-freq")){ insightFreqExpanded = !insightFreqExpanded; attr = "data-insight-freq"; }
-    else if(fold.hasAttribute("data-insight-files")){ insightFilesExpanded = !insightFilesExpanded; attr = "data-insight-files"; }
     else if(fold.hasAttribute("data-insight-fields")){ insightFieldsExpanded = !insightFieldsExpanded; attr = "data-insight-fields"; }
     else { insightMissingExpanded = !insightMissingExpanded; attr = "data-insight-missing"; }
     drawInsight();
