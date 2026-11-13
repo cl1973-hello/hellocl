@@ -620,7 +620,7 @@
   .type-item b{margin-left:auto;font-family:var(--mono);font-size:13px;color:var(--ink)}
   .field-table-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:var(--r-md)}
   .field-table-wrap.is-clip{max-height:330px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#CBD5E5 transparent}
-  .field-table-wrap.is-clip.is-open{max-height:none}
+  .field-table-wrap.is-clip.is-open{max-height:min(70vh,560px)}
   .field-table-wrap.is-clip::-webkit-scrollbar{width:8px;height:8px}
   .field-table-wrap.is-clip::-webkit-scrollbar-thumb{background:#D3DCE9;border-radius:99px}
   .field-table-wrap.is-clip thead th{position:sticky;top:0;z-index:1;box-shadow:inset 0 -1px 0 var(--rule)}
@@ -813,6 +813,7 @@
     .insight-grid .bar-value{font-size:12px}
     .insight-grid .insight-story{font-size:14px;line-height:1.8;padding:14px 16px}
     .insight-grid .list-scroll{max-height:330px}
+    .insight-grid .field-table-wrap.is-clip.is-open{max-height:min(58vh,420px)}
     .insight-grid .freq-tools select{max-width:230px}
   }
   @media (max-width:760px){
@@ -857,6 +858,12 @@
     .col-track em{font-size:10px}
     .ratio-track{height:11px}
     .list-scroll{max-height:302px}
+    .insight-grid .field-table{min-width:0;width:100%}
+    .insight-grid .field-pick{max-width:none;font-size:13px}
+    .insight-grid .field-table th{padding:9px 8px;font-size:11.5px}
+    .insight-grid .field-table td{padding:0 8px}
+    .insight-grid .field-table .cell-num{font-size:12px}
+    .insight-grid .field-table .type-badge{padding:2px 7px;font-size:11px}
     .cloud-wrap{height:262px}
     .file-table .c-time,.file-table .c-size{display:none}
     .file-table .c-rows{width:58px}
@@ -2838,11 +2845,12 @@
         '<td><span class="cell-num">' + nf(f.unique) + '</span></td></tr>';
     }).join("");
     var clip = p.fields.length > 10;
-    return '<section class="card insight-card" id="insightFields"><div class="card-head"><div><h2>字段明细</h2><p>点字段名，可以在下方切换它的「高频值」统计' + (clip ? '；默认显示前 10 列' : '') + '</p></div>' +
+    return '<section class="card insight-card" id="insightFields"><div class="card-head"><div><h2>字段明细</h2><p>点字段名，可以在下方切换它的「高频值」统计' + (clip ? '；默认显示前 10 列，展开后在框内滚动看完 ' + p.fields.length + ' 列' : '') + '</p></div>' +
       '<div class="card-tools"><span class="num">' + p.cols + ' 列</span>' +
       (clip ? foldBtn("data-insight-fields", insightFieldsExpanded, p.fields.length, " 列") : "") +
       '</div></div>' +
-      '<div class="field-table-wrap' + (clip ? " is-clip" : "") + (clip && insightFieldsExpanded ? " is-open" : "") + '">' +
+      '<div class="field-table-wrap' + (clip ? " is-clip" : "") + (clip && insightFieldsExpanded ? " is-open" : "") + '"' +
+      (clip ? ' tabindex="0" role="group" aria-label="字段明细表格，可在框内滚动"' : '') + '>' +
       '<table class="field-table"><caption>各字段的类型与数据质量</caption><thead><tr><th>字段</th><th>类型</th><th>非空</th><th>缺失</th><th>唯一值</th></tr></thead><tbody>' + rows + '</tbody></table></div></section>';
   }
 
